@@ -1,0 +1,9 @@
+{
+    "backendAPI": "http://localhost:5001/poolparty-2e023/eu-west3",
+    "apiKey": "AIzaSyDhxWX4E-sqyiFMR7qCiPcLlTLGBUmKrGM",
+    "authDomain": "pickone-2e023.firebaseapp.com",
+    "databaseURL": "https://pickone-2e023.firebaseio.com",
+    "projectId": "pickone-2e023",
+    "storageBucket": "pickone-2e023.appspot.com",
+    "messagingSenderId": "28900020747"
+}
