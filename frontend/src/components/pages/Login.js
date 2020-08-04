@@ -3,9 +3,6 @@ import PropTypes from 'prop-types';
 import {
     Box, Button, Form, FormField, Heading, Text, TextInput
 } from 'grommet';
-import { useHistory } from "react-router-dom";
-
-import firebase from 'firebase/app';
 
 import { withFirebaseService } from '../../hoc';
 import SocialNetworks from '../login/SocialNetworks';
@@ -45,14 +42,14 @@ class Login extends Component {
         const { isError, errorMessage, loading } = this.state;
         return (
             <Box>
-                <Heading level="2">Login</Heading>
+                <Heading level="3">Login</Heading>
                 <Box fill align="center" justify="center">
                     <Box width="medium">
                         <Form
                             onSubmit={this.handleSubmit}
                         >
 
-                            <FormField label="Adresse e-mail" name="email" ref={this.emailRef} required>
+                            <FormField label="Adresse e-mail" name="email" required>
                                 <TextInput name="email" type="email" />
                             </FormField>
 

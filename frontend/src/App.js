@@ -6,11 +6,12 @@ import { FormClose, User } from 'grommet-icons';
 /* Load local files */
 import { withAPIService, withFirebaseService } from './hoc';
 
-import { RouterButton } from './components/ext/RoutedControls';
+import { RouterButton, RouterAnchor } from './components/ext/RoutedControls';
 import Sidebar from './components/sidebar/Sidebar';
 import Login from './components/pages/Login';
 import Register from './components/pages/Register';
-import New from './components/pages/New';
+import NewPick from './components/pages/NewPick';
+import Dashboard from './components/pages/Dashboard';
 //import Profile from './components/pages/Profile';
 
 const theme = {
@@ -114,7 +115,7 @@ class App extends Component {
           {size => (
             <Box fill>
               <AppBar>
-                <Heading level='3' margin='none'>Pick1</Heading>
+                <Heading level='2' margin='none'><RouterAnchor path="/" color="light-1">Pick1</RouterAnchor></Heading>
                 <Box direction="row">
                   <Button icon={<User />} onClick={() => this.setState({ showSidebar: !this.state.showSidebar })} />
                   {(this.state.authenticated) ? (
@@ -137,15 +138,15 @@ class App extends Component {
               <Main direction='row' flex overflow={{ horizontal: 'hidden' }}>
                 <Box flex align='center' justify='center'>
                   <Route exact path="/login"> {
-                    this.state.authenticated ? <Redirect to="/" /> : <Login />
+                    this.state.authenticated ? <Redirect to="/dashboard" /> : <Login />
                   }
                   </Route>
                   <Route exact path="/register"> {
-                    this.state.authenticated ? <Redirect to="/" /> : <Register />
+                    this.state.authenticated ? <Redirect to="/dashboard" /> : <Register />
                   }
                   </Route>
-
-                  <Route exact path="/new" component={New} />
+                  <Route exact path="/dashboard" component={Dashboard} />
+                  <Route exact path="/newpick" component={NewPick} />
                 </Box>
                 {(!this.state.showSidebar || size !== 'small') ? (
                   <Collapsible direction="horizontal" open={this.state.showSidebar}>

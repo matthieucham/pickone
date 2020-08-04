@@ -41,10 +41,14 @@ une élection = le choix de quelque chose, où l'on invite ses amis à participe
 + openToSuggest Boolean
 + result String résultat du vote, vide au début
 + votes : subcollection ID = user.uid
++ participants : subcollection de user uid, adresse mail 
 ++ name String name du user qui a voté
 ++ choices Array
 
-/invites ?
+
+/invitations ?
++ user
++ pick
 
 l'auteur peut choisir: 
 - tout le monde peut voter du moment qu'il connait la clé

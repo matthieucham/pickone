@@ -62,7 +62,7 @@ class Register extends Component {
         const { isError, errorMessage, loading } = this.state;
         return (
             <Box>
-                <Heading level="2">Inscription</Heading>
+                <Heading level="3">Inscription</Heading>
                 <Box fill align="center" justify="center">
                     <Box width="medium">
                         <Form
