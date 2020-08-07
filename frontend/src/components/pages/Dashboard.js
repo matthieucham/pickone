@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-    Box, Button, Grid, Main, Text, Heading
+    Box, Button, Grid, Text, Heading
 } from 'grommet';
 import { Add, More } from 'grommet-icons';
 
@@ -68,24 +68,22 @@ const CurrentPick = ({ pickId, title, description, author, limit, isOwner }) => 
 class Dashboard extends Component {
     render() {
         return (
-            <Main fill>
-                <Grid
-                    rows={["1/2", "1/2"]}
-                    columns={["full"]}
-                    gap="medium"
-                    areas={[
-                        { name: 'current', start: [0, 0], end: [0, 0] },
-                        { name: 'past', start: [0, 1], end: [0, 1] },
-                    ]}
-                    fill
-                >
-                    <Box gridArea="current" fill wrap direction="row" alignContent="start" justify="start">
-                        <NewPick /> <CurrentPick pickId="TODO" title="Resto ce midi" description="" author="Fred" limit="02/08 12:00" isOwner={false} />
-                    </Box>
-                    <Box gridArea="past" fill wrap direction="row" alignContent="start" justify="start" background='light-4'>
-                    </Box>
-                </Grid>
-            </Main>)
+            <Grid
+                rows={["1/2", "1/2"]}
+                columns={["full"]}
+                gap="medium"
+                areas={[
+                    { name: 'current', start: [0, 0], end: [0, 0] },
+                    { name: 'past', start: [0, 1], end: [0, 1] },
+                ]}
+                fill
+            >
+                <Box gridArea="current" fill wrap direction="row" alignContent="start" justify="start">
+                    <NewPick /> <CurrentPick pickId="TODO" title="Resto ce midi" description="" author="Fred" limit="02/08 12:00" isOwner={false} />
+                </Box>
+                <Box gridArea="past" fill wrap direction="row" alignContent="start" justify="start" background='light-4'>
+                </Box>
+            </Grid>)
     }
 }
 

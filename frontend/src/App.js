@@ -12,6 +12,7 @@ import Login from './components/pages/Login';
 import Register from './components/pages/Register';
 import NewPick from './components/pages/NewPick';
 import Dashboard from './components/pages/Dashboard';
+import OpenPick from './components/pages/OpenPick';
 //import Profile from './components/pages/Profile';
 
 const theme = {
@@ -49,14 +50,35 @@ const initialState = {
   showSidebar: false
 };
 
+const AppRoutes = ({ authenticated, user }) =>
+  (authenticated) ? (
+    <Box flex>
+      <Route exact path="/login"> <Redirect to="/dashboard" /></Route>
+      <Route exact path="/register"><Redirect to="/dashboard" /></Route>
+      <Route exact path="/dashboard">
+        <Dashboard user={user} />
+      </Route>
+      <Route exact path="/newpick">
+        <NewPick user={user} />
+      </Route>
+      <Route exact path="/pick/:id">
+        <OpenPick user={user} />
+      </Route>
+    </Box>
+  ) : (
+      <Box flex align='center' justify='center'>
+        <Route exact path="/login"> <Login /></Route>
+        <Route exact path="/register"><Register /></Route>
+      </Box>
+    )
+
 class App extends Component {
 
   state = initialState;
 
   setApplicationUser = async (loggedInUser) => {
-    console.log(loggedInUser);
-    //const userPreferences = await this.state.fbDB.collection('users').doc(`${loggedInUser.uid}`).get();
     const idToken = await loggedInUser.getIdToken();
+    //const userPreferences = await this.state.fbDB.collection('users').doc(`${loggedInUser.uid}`).get();
     await this.setState({
       authenticated: true,
       user: {
@@ -85,10 +107,6 @@ class App extends Component {
     }
   }
 
-  toProfile = async () => {
-    this.props.history.push("/profile");
-  }
-
   signOut = async () => {
     await this.setState({ loading: true });
     await this.props.FirebaseService.getAuth().signOut();
@@ -109,6 +127,7 @@ class App extends Component {
   }
 
   render() {
+    const { authenticated, user } = this.state;
     return (
       <Grommet theme={theme} full>
         <ResponsiveContext.Consumer>
@@ -118,13 +137,13 @@ class App extends Component {
                 <Heading level='2' margin='none'><RouterAnchor path="/" color="light-1">Pick1</RouterAnchor></Heading>
                 <Box direction="row">
                   <Button icon={<User />} onClick={() => this.setState({ showSidebar: !this.state.showSidebar })} />
-                  {(this.state.authenticated) ? (
+                  {(authenticated) ? (
                     <Menu
                       dropProps={{
                         align: { top: 'bottom', left: 'left' },
                         elevation: 'xlarge',
                       }}
-                      label={this.state.user.displayName}
+                      label={user.displayName}
                       items={[
                         { label: 'Logout', onClick: this.signOut },
                       ]}
@@ -135,20 +154,8 @@ class App extends Component {
                   }
                 </Box>
               </AppBar>
-              <Main direction='row' flex overflow={{ horizontal: 'hidden' }}>
-                <Box flex align='center' justify='center'>
-                  <Route exact path="/login"> {
-                    this.state.authenticated ? <Redirect to="/dashboard" /> : <Login />
-                  }
-                  </Route>
-                  <Route exact path="/register"> {
-                    this.state.authenticated ? <Redirect to="/dashboard" /> : <Register />
-                  }
-                  </Route>
-                  <Route exact path="/dashboard" component={Dashboard} />
-                  <Route exact path="/newpick" component={NewPick} />
-                </Box>
-                {(!this.state.showSidebar || size !== 'small') ? (
+              <Main direction="row" flex overflow={{ horizontal: 'hidden' }}>
+                {/* {(!this.state.showSidebar || size !== 'small') ? (
                   <Collapsible direction="horizontal" open={this.state.showSidebar}>
                     <Box
                       flex
@@ -184,7 +191,8 @@ class App extends Component {
                         <Sidebar />
                       </Box>
                     </Layer>
-                  )}
+                  )} */}
+                <AppRoutes user={user} authenticated={authenticated} />
               </Main>
             </Box>
           )}

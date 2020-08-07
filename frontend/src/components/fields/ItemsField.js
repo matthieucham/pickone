@@ -30,7 +30,7 @@ class ItemsField extends Component {
     }
 
     removeItem(val) {
-        this.setState({ items: this.state.items.filter(v => v != val) }, this.valueChanged);
+        this.setState({ items: this.state.items.filter(v => v !== val) }, this.valueChanged);
     }
 
     addItem(val) {
@@ -45,7 +45,7 @@ class ItemsField extends Component {
         return (
             <Box justify="start" align="start">
                 <Box direction="row" justify="start" alignContent="start" wrap>{boxes}</Box>
-                <Keyboard onEnter={() => this.addItem(newvalue)}>
+                <Keyboard onEnter={(event) => { event.preventDefault(); this.addItem(newvalue) }}>
                     <Box direction="row" justify="start" alignContent="start" pad="xsmall">
                         <TextInput placeholder="Choix" size="large"
                             value={newvalue}
