@@ -13,13 +13,13 @@ const RemovableItemBox = ({ label, confirmText, onRemove }) => {
         setOpenConfirm(undefined);
         onRemove();
     }
-    console.log(confirmText);
-
     return (
         <Box pad="none">
             <Box direction="row" pad="xsmall" align="center" border margin="xsmall">
                 <Box pad="xsmall"><Text>{label}</Text></Box>
-                <Button raw icon={<Trash />} onClick={confirmText ? onOpenConfirm : onRemove} pad="xsmall" focusIndicator={false} />
+                {onRemove &&
+                    <Button raw icon={<Trash />} onClick={confirmText ? onOpenConfirm : onRemove} pad="xsmall" focusIndicator={false} />
+                }
             </Box>
             {openConfirm && (
                 <Layer position="center" onClickOutside={onCloseConfirm} onEsc={onCloseConfirm}>

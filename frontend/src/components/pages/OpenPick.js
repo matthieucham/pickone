@@ -8,6 +8,7 @@ import { withRouter } from 'react-router-dom';
 
 import { withAPIService, withFirebaseService } from '../../hoc';
 import NotificationLayer from "../ext/NotificationLayer";
+import RemovableItemBox from "../lib/RemovableItemBox";
 
 
 class OpenPick extends Component {
@@ -18,48 +19,65 @@ class OpenPick extends Component {
         errorMessage: '',
         loading: true,
         pick: {},
+        vote: [],
         pickedInList: [],
         suggested: "",
-        voters: [],
-        openNotif: false,
-        newVoterName: ""
+        // voters: [],
+        // openNotif: false,
+        // newVoterName: ""
     }
 
     componentDidMount() {
-        this.props.FirebaseService.getDb().collection('picks').doc(this.state.pickId).get().then((pick) => {
+        this.props.FirebaseService.getDb().collection('picks/' + this.state.pickId + '/votes/').doc(this.props.user.id).get().then(vote => {
+            if (vote.exists) {
+                const voteData = vote.data();
+                this.setState({ vote: voteData });
+            }
+        });
+        this.props.FirebaseService.getDb().collection('picks').doc(this.state.pickId).onSnapshot(pick => {
             if (pick.exists) {
                 const pickData = pick.data();
-                this.setState({ pick: pickData });
-                this.props.FirebaseService.getDb().collection('picks/' + this.state.pickId + '/votes/').doc(this.props.user.id).get().then(vote => {
-                    if (vote.exists) {
-                        const voteData = vote.data();
-                        this.setState({
-                            pickedInList: voteData.choices.filter(v => pickData.choices.includes(v)),
-                            suggested: voteData.choices.filter(v => !pickData.choices.includes(v)).shift()
-                        });
-                    }
-                    this.setState({ loading: false });
-                });
-                this.props.FirebaseService.getDb().collection('picks/' + this.state.pickId + '/votes/').onSnapshot(snapshot => {
-                    let voters = [];
-                    snapshot.forEach(doc => {
-                        voters.push({ name: doc.data().name, id: doc.id });
-                    });
-                    this.setState({ voters: voters });
-                    snapshot.docChanges().forEach(change => {
-                        if (change.type === "added" || change.type === "modified") {
-                            console.log(change.doc.data());
-                            this.setState({ newVoterName: change.doc.data().name, openNotif: true });
-                        }
-                    });
+                this.setState({
+                    loading: false,
+                    pick: pickData,
+                    pickedInList: this.state.vote.choices ? this.state.vote.choices.filter(v => pickData.choices.includes(v)) : [],
+                    suggested: this.state.vote.choices ? this.state.vote.choices.filter(v => !pickData.choices.includes(v)).shift() : "",
+                    isOrga: pickData.author.id === this.props.user.id
                 });
             } else {
                 this.setState({ loading: false, isError: true, errorMessage: "Impossible d'accèder à ce pick" })
             }
-        }
-        ).catch((error) => {
-            this.setState({ loading: false, isError: true, errorMessage: "Impossible d'accèder à ce pick" })
         });
+    }
+
+    cancelVote = async (vote) => {
+        this.setState({
+            isError: false,
+            errorMessage: '',
+            loading: true,
+        });
+
+        const user = this.props.user;
+        try {
+            const response = await this.props.APIService.callAPIWithAuth(
+                `picks/${this.state.pickId}/vote/${vote.id}`,
+                user.idToken,
+                {
+                    method: 'DELETE',
+                    body: JSON.stringify({ displayName: vote.name }),
+                    headers: {
+                        'content-type': 'application/json'
+                    }
+                }
+            ).then(response => response.json());
+            if ("error" in response) {
+                this.setState({ loading: false, isError: true, errorMessage: response.error });
+            } else {
+                this.setState({ loading: false, isError: false });
+            }
+        } catch (e) {
+            this.setState({ loading: false, isError: true, errorMessage: e.message });
+        }
     }
 
     handleSubmit = async ({ value }) => {
@@ -103,7 +121,7 @@ class OpenPick extends Component {
     }
 
     render() {
-        const { pick, pickedInList, suggested, loading, voters } = this.state;
+        const { pick, pickedInList, suggested, loading, isOrga } = this.state;
         return (
             <Box align="center">
                 {(!loading) && (
@@ -111,7 +129,13 @@ class OpenPick extends Component {
                         <Heading level="3">Voter pour "{pick.title}"</Heading>
                         <Text>Organisé par {pick.author.name} le {dayjs(pick.dateCreated).format('DD/MM/YYYY')}</Text>
                         <Text>Clé: {pick.key}</Text>
-                        <List data={voters} primaryKey="name" />
+                        <Box direction="row" justify="start" alignContent="start" wrap>
+                            {pick.voters.map((it) =>
+                                <RemovableItemBox key={"vb_" + it.id}
+                                    label={it.name}
+                                    confirmText={isOrga ? `Annuler le vote de ${it.name} ?` : undefined}
+                                    onRemove={() => this.cancelVote(it)} />)}
+                        </Box>
                         <Form pad="small" align="center" onSubmit={this.handleSubmit}>
                             <FormField label="Choix" name="picked" required>
 
@@ -135,9 +159,9 @@ class OpenPick extends Component {
                         </Form>
                     </Box>
                 )}
-                {this.state.openNotif &&
+                {/* {this.state.openNotif &&
                     <NotificationLayer text={`${this.state.newVoterName} a voté`} status="ok" onClose={() => this.setState({ openNotif: false })} />
-                }
+                } */}
             </Box>
 
         );

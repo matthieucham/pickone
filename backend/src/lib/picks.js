@@ -134,34 +134,97 @@ const vote = async ({ admin }, request, response) => {
         });
     }
 
+    const pickData = await getPickOr404(db, request.params.pickId, true)
     try {
-        const pickData = await getPickOr404(db, request.params.pickId, true)
         validate(request.body, pickData);
-        const result = {
-            registered: false,
-        }
-        await db.collection(`picks/${request.params.pickId}/votes`).doc(request.user.uid).set(formatDoc(request.user, request.body));
-        result.registered = true;
-        // Register voter in root pick
-        await db.collection('picks').doc(request.params.pickId).update(
-            {
-                voters: admin.firestore.FieldValue.arrayUnion({
-                    id: request.user.uid,
-                    name: request.user.displayName ? request.user.displayName : request.user.email
-                })
-            }
-        );
-        return response.send(result);
     } catch (error) {
+        return response.status(400).send({
+            error: error.message
+        });
+    }
+    const result = {
+        registered: false,
+    }
+    var batch = db.batch();
+    var voteRef = db.collection(`picks/${request.params.pickId}/votes`).doc(request.user.uid);
+    batch.set(
+        voteRef, formatDoc(request.user, request.body)
+    );
+    var pickRef = db.collection('picks').doc(request.params.pickId);
+    batch.update(pickRef, {
+        voters: admin.firestore.FieldValue.arrayUnion({
+            id: request.user.uid,
+            name: request.user.displayName ? request.user.displayName : request.user.email
+        })
+    });
+    batch.commit().then(() => {
+        result.registered = true;
+        return response.send(result);
+    }
+    ).catch(error => {
         console.log(error);
         return response.status(500).send({
             error: error.message
         });
+    });
+}
+
+const cancelVote = async ({ admin }, request, response) => {
+
+    const validate = (data) => {
+        if (!data.displayName) {
+            throw new ValidationError('displayName')
+        }
     }
 
+    const db = admin.firestore();
+    if (!request.body) {
+        return response.status(400).send({
+            error: 'No data in body'
+        });
+    }
+
+    const pickData = await getPickOr404(db, request.params.pickId, true)
+    // TODO : use rule instead of this check:
+    if (request.user.uid !== pickData.author.id) {
+        return response.status(403).send({
+            error: "Forbidden"
+        })
+    }
+    try {
+        validate(request.body);
+    } catch (error) {
+        return response.status(400).send({
+            error: error.message
+        });
+    }
+    const result = {
+        deleted: false,
+    }
+    var batch = db.batch();
+    var voteRef = db.collection(`picks/${request.params.pickId}/votes`).doc(request.params.voteId);
+    batch.delete(voteRef);
+    var pickRef = db.collection('picks').doc(request.params.pickId);
+    batch.update(pickRef, {
+        voters: admin.firestore.FieldValue.arrayRemove({
+            id: request.params.voteId,
+            name: request.body.displayName
+        })
+    });
+    batch.commit().then(() => {
+        result.deleted = true;
+        return response.send(result);
+    }
+    ).catch(error => {
+        console.log(error);
+        return response.status(500).send({
+            error: error.message
+        });
+    });
 }
 
 module.exports = {
     create,
-    vote
+    vote,
+    cancelVote
 }
