@@ -140,8 +140,17 @@ const vote = async ({ admin }, request, response) => {
         const result = {
             registered: false,
         }
-        await db.collection('picks').doc(request.params.pickId).collection('votes').doc(request.user.uid).set(formatDoc(request.user, request.body));
+        await db.collection(`picks/${request.params.pickId}/votes`).doc(request.user.uid).set(formatDoc(request.user, request.body));
         result.registered = true;
+        // Register voter in root pick
+        await db.collection('picks').doc(request.params.pickId).update(
+            {
+                voters: admin.firestore.FieldValue.arrayUnion({
+                    id: request.user.uid,
+                    name: request.user.displayName ? request.user.displayName : request.user.email
+                })
+            }
+        );
         return response.send(result);
     } catch (error) {
         console.log(error);

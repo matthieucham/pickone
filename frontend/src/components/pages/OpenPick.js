@@ -1,12 +1,13 @@
 import React, { Component, useState } from 'react';
 import dayjs from 'dayjs';
 import {
-    Box, Button, CheckBoxGroup, Form, FormField, Heading, RadioButtonGroup, Text, TextInput
+    Box, Button, CheckBoxGroup, Form, FormField, Heading, List, RadioButtonGroup, Text, TextInput
 } from 'grommet';
 import { Group, Risk } from 'grommet-icons';
 import { withRouter } from 'react-router-dom';
 
 import { withAPIService, withFirebaseService } from '../../hoc';
+import NotificationLayer from "../ext/NotificationLayer";
 
 
 class OpenPick extends Component {
@@ -15,7 +16,13 @@ class OpenPick extends Component {
         pickId: this.props.match.params.id,
         isError: false,
         errorMessage: '',
-        loading: false,
+        loading: true,
+        pick: {},
+        pickedInList: [],
+        suggested: "",
+        voters: [],
+        openNotif: false,
+        newVoterName: ""
     }
 
     componentDidMount() {
@@ -31,27 +38,41 @@ class OpenPick extends Component {
                             suggested: voteData.choices.filter(v => !pickData.choices.includes(v)).shift()
                         });
                     }
+                    this.setState({ loading: false });
+                });
+                this.props.FirebaseService.getDb().collection('picks/' + this.state.pickId + '/votes/').onSnapshot(snapshot => {
+                    let voters = [];
+                    snapshot.forEach(doc => {
+                        voters.push({ name: doc.data().name, id: doc.id });
+                    });
+                    this.setState({ voters: voters });
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === "added" || change.type === "modified") {
+                            console.log(change.doc.data());
+                            this.setState({ newVoterName: change.doc.data().name, openNotif: true });
+                        }
+                    });
                 });
             } else {
-                this.setState({ isError: true, errorMessage: "Impossible d'accèder à ce pick" })
+                this.setState({ loading: false, isError: true, errorMessage: "Impossible d'accèder à ce pick" })
             }
         }
         ).catch((error) => {
-            this.setState({ isError: true, errorMessage: "Impossible d'accèder à ce pick" })
+            this.setState({ loading: false, isError: true, errorMessage: "Impossible d'accèder à ce pick" })
         });
     }
 
     handleSubmit = async ({ value }) => {
-        console.log(value);
+
 
         await this.setState({
             isError: false,
             errorMessage: '',
-            loading: true
+            loading: true,
         });
 
         let values;
-        if (this.props.suggest && value.suggested) {
+        if (this.state.pick.suggest === true && value.suggested) {
             values = [...value.picked, value.suggested];
         } else {
             values = [...value.picked];
@@ -74,7 +95,6 @@ class OpenPick extends Component {
             if ("error" in response) {
                 this.setState({ loading: false, isError: true, errorMessage: response.error });
             } else {
-                console.log(response.registered);
                 this.setState({ loading: false, isError: false });
             }
         } catch (e) {
@@ -83,14 +103,15 @@ class OpenPick extends Component {
     }
 
     render() {
-        const { pick, pickedInList, suggested, loading } = this.state;
+        const { pick, pickedInList, suggested, loading, voters } = this.state;
         return (
             <Box align="center">
-                {pick && (
+                {(!loading) && (
                     <Box align="center">
                         <Heading level="3">Voter pour "{pick.title}"</Heading>
                         <Text>Organisé par {pick.author.name} le {dayjs(pick.dateCreated).format('DD/MM/YYYY')}</Text>
                         <Text>Clé: {pick.key}</Text>
+                        <List data={voters} primaryKey="name" />
                         <Form pad="small" align="center" onSubmit={this.handleSubmit}>
                             <FormField label="Choix" name="picked" required>
 
@@ -105,8 +126,7 @@ class OpenPick extends Component {
                             {
                                 pick.suggest &&
                                 <FormField label="Une autre suggestion ?" name="suggested">
-                                    <TextInput name="suggested" size="large" value={suggested}
-                                        onChange={(value) => this.setState({ suggested: value })} />
+                                    <TextInput name="suggested" size="large" value={suggested} onChange={event => this.setState({ suggested: event.target.value })} />
                                 </FormField>
                             }
 
@@ -115,6 +135,9 @@ class OpenPick extends Component {
                         </Form>
                     </Box>
                 )}
+                {this.state.openNotif &&
+                    <NotificationLayer text={`${this.state.newVoterName} a voté`} status="ok" onClose={() => this.setState({ openNotif: false })} />
+                }
             </Box>
 
         );

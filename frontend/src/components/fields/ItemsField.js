@@ -1,16 +1,10 @@
 import React, { Component } from 'react';
 import {
-    Box, Button, Form, FormField, Heading, Keyboard, Text, TextArea, TextInput
+    Box, Button, Keyboard, TextInput
 } from 'grommet';
 import { FormClose, FormAdd } from 'grommet-icons';
 
-
-const ItemBox = ({ label, onClose }) =>
-    <Box direction="row" pad="xsmall" align="center" border margin="xsmall">
-        <Text>{label}</Text>
-        <Button raw icon={<FormClose />} onClick={onClose} pad="xsmall" />
-    </Box>
-
+import RemovableItemBox from "../lib/RemovableItemBox";
 
 class ItemsField extends Component {
 
@@ -41,7 +35,7 @@ class ItemsField extends Component {
 
     render() {
         const { items, newvalue } = this.state;
-        const boxes = items.map((it) => <ItemBox key={"ib_" + it} label={it} onClose={() => this.removeItem(it)} />)
+        const boxes = items.map((it) => <RemovableItemBox key={"ib_" + it} label={it} confirmText={`Supprimer le choix ${it} ?`} onRemove={() => this.removeItem(it)} />)
         return (
             <Box justify="start" align="start">
                 <Box direction="row" justify="start" alignContent="start" wrap>{boxes}</Box>
