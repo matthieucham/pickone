@@ -2,6 +2,7 @@ import React, { useState, Component } from 'react';
 import { withRouter, Redirect, Route } from 'react-router-dom';
 import { Box, Button, Collapsible, Heading, Grommet, Layer, Main, Menu, Nav, ResponsiveContext } from 'grommet';
 import { FormClose, User } from 'grommet-icons';
+import { hpe } from 'grommet-theme-hpe';
 
 /* Load local files */
 import { withAPIService, withFirebaseService } from './hoc';
@@ -129,7 +130,7 @@ class App extends Component {
   render() {
     const { authenticated, user } = this.state;
     return (
-      <Grommet theme={theme} full>
+      <Grommet theme={hpe} themeMode="light" full>
         <ResponsiveContext.Consumer>
           {size => (
             <Box fill>

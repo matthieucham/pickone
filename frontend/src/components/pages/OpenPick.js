@@ -1,14 +1,110 @@
 import React, { Component, useState } from 'react';
 import dayjs from 'dayjs';
 import {
-    Box, Button, CheckBoxGroup, Form, FormField, Heading, List, RadioButtonGroup, Text, TextInput
+    Box, Button, CheckBoxGroup, Collapsible, Form, FormField, Heading, Layer, RadioButtonGroup, ResponsiveContext, Text, TextInput
 } from 'grommet';
-import { Group, Risk } from 'grommet-icons';
+import { Group, Risk, Expand, FormClose } from 'grommet-icons';
 import { withRouter } from 'react-router-dom';
 
 import { withAPIService, withFirebaseService } from '../../hoc';
 import NotificationLayer from "../ext/NotificationLayer";
 import RemovableItemBox from "../lib/RemovableItemBox";
+import PickStatusBar from "../lib/PickStatusBar";
+import LabelAndValue from "../lib/LabelAndValue";
+
+
+const VotersBox = (props) => {
+    const [openDetails, setOpenDetails] = React.useState(false);
+    const { voters, onCancel } = props;
+    let summaryLabel;
+    if (props.voters && voters.length > 1) {
+        summaryLabel = `${voters.length} votants`;
+    } else if (voters && voters.length === 1) {
+        summaryLabel = `${voters.length} votant`;
+    } else {
+        summaryLabel = `Aucun votant pour l'instant`;
+    }
+    const hasVoters = (voters && voters.length > 0);
+    return <ResponsiveContext.Consumer>
+        {size => (
+            <Box border>
+                <Box
+                    align="center"
+                    direction="row"
+                    gap="small"
+                    pad="small"
+                    margin="small"
+                    justify="between"
+                >
+                    <Text>{summaryLabel}</Text>
+                    {hasVoters &&
+                        <Button icon={<Expand />}
+                            onClick={() => setOpenDetails(!openDetails)}
+                            focusIndicator={false}
+                            hoverIndicator={true}
+                            pad="xsmall"
+                            plain />
+                    }
+                </Box>
+                {(!openDetails || size !== 'small') ? (
+                    <Collapsible direction="vertical" open={openDetails}>
+                        <Box
+                            flex
+                            width='medium'
+                            elevation='small'
+                            alignContent='start'
+                            direction="row"
+                            justify='start'
+                            wrap
+                        >
+                            {
+                                hasVoters && voters.map((it) =>
+                                    <RemovableItemBox key={"vb_" + it.id}
+                                        label={it.name}
+                                        confirmText={onCancel ? `Annuler le vote de ${it.name} ?` : undefined}
+                                        onRemove={onCancel ? () => onCancel(it) : undefined} />)
+                            }
+                        </Box>
+                    </Collapsible>
+                ) : (
+                        <Layer responsive={false}
+                            onClickOutside={() => setOpenDetails(false)}
+                            onEsc={() => setOpenDetails(false)}>
+                            <Box pad="medium" gap="small" width="medium">
+                                <Box
+                                    tag='header'
+                                    justify='between'
+                                    align='center'
+                                    direction='row'
+                                >
+                                    <Text>{summaryLabel}</Text>
+                                    <Button
+                                        icon={<FormClose />}
+                                        onClick={() => setOpenDetails(false)}
+                                        focusIndicator={false}
+                                        hoverIndicator={true}
+                                    />
+                                </Box>
+                                <Box
+                                    alignContent='start'
+                                    direction="row"
+                                    justify='start'
+                                    wrap
+                                >
+                                    {
+                                        hasVoters && voters.map((it) =>
+                                            <RemovableItemBox key={"vb_" + it.id}
+                                                label={it.name}
+                                                confirmText={onCancel ? `Annuler le vote de ${it.name} ?` : undefined}
+                                                onRemove={onCancel ? () => onCancel(it) : undefined} />)
+                                    }
+                                </Box>
+                            </Box>
+                        </Layer>
+                    )}
+            </Box>)}
+    </ResponsiveContext.Consumer>
+}
 
 
 class OpenPick extends Component {
@@ -22,9 +118,7 @@ class OpenPick extends Component {
         vote: [],
         pickedInList: [],
         suggested: "",
-        // voters: [],
         // openNotif: false,
-        // newVoterName: ""
     }
 
     componentDidMount() {
@@ -123,19 +217,13 @@ class OpenPick extends Component {
     render() {
         const { pick, pickedInList, suggested, loading, isOrga } = this.state;
         return (
-            <Box align="center">
+            <Box align="center" fill>
                 {(!loading) && (
-                    <Box align="center">
-                        <Heading level="3">Voter pour "{pick.title}"</Heading>
-                        <Text>Organisé par {pick.author.name} le {dayjs(pick.dateCreated).format('DD/MM/YYYY')}</Text>
-                        <Text>Clé: {pick.key}</Text>
-                        <Box direction="row" justify="start" alignContent="start" wrap>
-                            {pick.voters.map((it) =>
-                                <RemovableItemBox key={"vb_" + it.id}
-                                    label={it.name}
-                                    confirmText={isOrga ? `Annuler le vote de ${it.name} ?` : undefined}
-                                    onRemove={() => this.cancelVote(it)} />)}
-                        </Box>
+                    <Box align="center" fill border>
+                        <Heading level="4">{pick.title}</Heading>
+                        <LabelAndValue label="Organisateur" value={pick.author.name} />
+                        <PickStatusBar pick={pick} onClosePick={() => { }} onCancelPick={() => { }} />
+                        <VotersBox voters={pick.voters} onCancel={isOrga ? this.cancelVote : undefined} />
                         <Form pad="small" align="center" onSubmit={this.handleSubmit}>
                             <FormField label="Choix" name="picked" required>
 

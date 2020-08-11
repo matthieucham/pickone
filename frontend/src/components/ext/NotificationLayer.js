@@ -16,7 +16,6 @@ const NotificationLayer = ({ text, icon, status, onClose }) =>
             direction="row"
             gap="small"
             justify="between"
-            round="medium"
             elevation="medium"
             pad={{ vertical: 'xsmall', horizontal: 'small' }}
             background={`status-${status}`}
