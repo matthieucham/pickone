@@ -4,8 +4,10 @@ import {
 } from 'grommet';
 import { Trash } from 'grommet-icons';
 
+import ConfirmationLayer from "../lib/ConfirmationLayer";
 
-const RemovableItemBox = ({ label, confirmText, onRemove }) => {
+
+const RemovableItemBox = ({ label, confirmText, onRemove, ...props }) => {
     const [openConfirm, setOpenConfirm] = React.useState();
     const onOpenConfirm = () => setOpenConfirm(true);
     const onCloseConfirm = () => setOpenConfirm(undefined);
@@ -14,8 +16,8 @@ const RemovableItemBox = ({ label, confirmText, onRemove }) => {
         onRemove();
     }
     return (
-        <Box pad="none">
-            <Box direction="row" pad="xsmall" align="center" border margin="xsmall" background="light-2">
+        <Box>
+            <Box direction="row" pad="xsmall" align="center" border margin="xsmall" background="light-2" {...props}>
                 <Box pad="xsmall"><Text>{label}</Text></Box>
                 {onRemove &&
                     <Button raw
@@ -26,33 +28,8 @@ const RemovableItemBox = ({ label, confirmText, onRemove }) => {
                 }
             </Box>
             {openConfirm && (
-                <Layer position="center" onClickOutside={onCloseConfirm} onEsc={onCloseConfirm} responsive={false}>
-                    <Box pad="medium" gap="small" width="medium">
-                        <Heading level={3} margin="none">
-                            Confirmation</Heading>
-                        <Text>{confirmText}</Text>
-                        <Box
-                            as="footer"
-                            gap="small"
-                            direction="row"
-                            align="center"
-                            justify="end"
-                            pad={{ top: 'medium', bottom: 'small' }}
-                        >
-                            <Button label="Annuler" onClick={onCloseConfirm} color="dark-3" />
-                            <Button
-                                label={
-                                    <Text color="white">
-                                        <strong>Supprimer</strong>
-                                    </Text>
-                                }
-                                onClick={onConfirmAndClose}
-                                primary
-                                color="status-critical"
-                            />
-                        </Box>
-                    </Box>
-                </Layer>
+                <ConfirmationLayer onCancelAction={onCloseConfirm} onConfirmAction={onConfirmAndClose}
+                    title="Confirmation" text={confirmText} actionLabel="Supprimer" />
             )}
         </Box>
     );

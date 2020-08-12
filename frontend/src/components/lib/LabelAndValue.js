@@ -4,14 +4,16 @@ import {
     Text
 } from "grommet";
 
-const LabelAndValue = ({ label, value }) =>
-    <Box direction="row"
-        gap="xsmall"
-        justify="start"
-        align="center"
-    >
-        <Text size="small">{label}:</Text>
-        <Text>{value}</Text>
+const LabelAndValue = ({ label, icon, value, ...props }) =>
+    <Box border {...props} direction="row" justify="between" align="center" pad="small" round="xsmall">
+        {icon && <Box>{icon}</Box>}
+        <Box
+            justify="start"
+            align="center"
+        >
+            <Text textAlign="center" size="small">{label}</Text>
+            <Text textAlign="center" weight="bold">{value}</Text>
+        </Box>
     </Box>
 
 export default LabelAndValue;

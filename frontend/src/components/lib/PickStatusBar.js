@@ -26,7 +26,7 @@ const PickStatusBar = ({ pick, onClosePick, onCancelPick }) => {
             direction="row"
             justify="between"
             wrap>
-            <Box direction="row" gap="small" align="center">
+            <Box direction="row" gap="small" align="center" >
                 <Text>{status.label}</Text>
                 {status.icon}
             </Box>

@@ -1,6 +1,6 @@
 import React, { useState, Component } from 'react';
 import { withRouter, Redirect, Route } from 'react-router-dom';
-import { Box, Button, Collapsible, Heading, Grommet, Layer, Main, Menu, Nav, ResponsiveContext } from 'grommet';
+import { Box, Button, Collapsible, Heading, Grommet, Layer, Main, Menu, Nav, ResponsiveContext, Text } from 'grommet';
 import { FormClose, User } from 'grommet-icons';
 import { hpe } from 'grommet-theme-hpe';
 
@@ -130,11 +130,11 @@ class App extends Component {
   render() {
     const { authenticated, user } = this.state;
     return (
-      <Grommet theme={hpe} themeMode="light" full>
+      <Grommet theme={theme} full>
         <ResponsiveContext.Consumer>
           {size => (
-            <Box fill>
-              <AppBar>
+            <Box fill="horizontal">
+              <AppBar fill="horizontal">
                 <Heading level='2' margin='none'><RouterAnchor path="/" color="light-1">Pick1</RouterAnchor></Heading>
                 <Box direction="row">
                   <Button icon={<User />} onClick={() => this.setState({ showSidebar: !this.state.showSidebar })} />
