@@ -3,21 +3,20 @@ import dayjs from 'dayjs';
 import {
     Box, Button, CheckBoxGroup, Collapsible, Form, FormField, Heading, Layer, Menu, RadioButtonGroup, ResponsiveContext, Text, TextInput
 } from 'grommet';
-import { Group, Risk, Expand, FormClose, Trash } from 'grommet-icons';
+import { Trash } from 'grommet-icons';
 import { withRouter } from 'react-router-dom';
 
-import { withAPIService, withFirebaseService } from '../../hoc';
-import NotificationLayer from "../ext/NotificationLayer";
+import { withAPIService, withFirebaseService, withToast } from '../../hoc';
+import NotificationToast from "../lib/NotificationToast";
 import RemovableItemBox from "../lib/RemovableItemBox";
 import PickStatusBar from "../lib/PickStatusBar";
 import LabelAndValue from "../lib/LabelAndValue";
 import ConfirmationLayer from "../lib/ConfirmationLayer";
 
 
-const VotersBox2 = ({ voters, onCancel, ...props }) => {
+const VotersBox = ({ userId, voters, onCancel, ...props }) => {
     const [openConfirm, setOpenConfirm] = React.useState();
     const [clickedVoter, setClickedVoter] = React.useState();
-    const onOpenConfirm = () => setOpenConfirm(true);
     const onCloseConfirm = () => setOpenConfirm(undefined);
     const onConfirmAndClose = () => {
         setOpenConfirm(undefined);
@@ -37,10 +36,10 @@ const VotersBox2 = ({ voters, onCancel, ...props }) => {
         votersItems = voters.map(v => {
             return {
                 label: <Box pad="small" alignSelf="center">{v.name}</Box>,
-                icon: onCancel ? <Box alignSelf="center"><Trash /></Box> : undefined,
+                icon: (onCancel && userId !== v.id) ? <Box alignSelf="center"><Trash /></Box> : undefined,
                 gap: "small",
                 reverse: true,
-                onClick: onCancel ? () => { setClickedVoter(v); setOpenConfirm(true) } : undefined
+                onClick: (onCancel && userId !== v.id) ? () => { setClickedVoter(v); setOpenConfirm(true) } : undefined
             }
         });
     }
@@ -62,98 +61,6 @@ const VotersBox2 = ({ voters, onCancel, ...props }) => {
 }
 
 
-const VotersBox = ({ voters, onCancel, ...props }) => {
-    const [openDetails, setOpenDetails] = React.useState(false);
-    let summaryLabel;
-    if (props.voters && voters.length > 1) {
-        summaryLabel = `${voters.length} votants`;
-    } else if (voters && voters.length === 1) {
-        summaryLabel = `${voters.length} votant`;
-    } else {
-        summaryLabel = `Aucun votant pour l'instant`;
-    }
-    const hasVoters = (voters && voters.length > 0);
-    return <ResponsiveContext.Consumer>
-        {size => (
-            <Box border round="xsmall" {...props}>
-                <Box
-                    align="center"
-                    direction="row"
-                    gap="small"
-                    pad="small"
-                    margin="small"
-                    justify="between"
-                >
-                    <Text>{summaryLabel}</Text>
-                    {hasVoters &&
-                        <Button icon={<Expand />}
-                            onClick={() => setOpenDetails(!openDetails)}
-                            focusIndicator={false}
-                            hoverIndicator={true}
-                            pad="xsmall"
-                            plain />
-                    }
-                </Box>
-                {(!openDetails || size !== 'small') ? (
-                    <Collapsible direction="vertical" open={openDetails}>
-                        <Box
-                            elevation='small'
-                            alignContent='start'
-                            direction="row"
-                            justify='start'
-                            wrap
-                        >
-                            {
-                                hasVoters && voters.map((it) =>
-                                    <RemovableItemBox key={"vb_" + it.id}
-                                        label={it.name}
-                                        confirmText={onCancel ? `Annuler le vote de ${it.name} ?` : undefined}
-                                        onRemove={onCancel ? () => onCancel(it) : undefined}
-                                        round="xsmall" />)
-                            }
-                        </Box>
-                    </Collapsible>
-                ) : (
-                        <Layer responsive={false}
-                            onClickOutside={() => setOpenDetails(false)}
-                            onEsc={() => setOpenDetails(false)}>
-                            <Box pad="medium" gap="small" width="medium">
-                                <Box
-                                    tag='header'
-                                    justify='between'
-                                    align='center'
-                                    direction='row'
-                                >
-                                    <Text>{summaryLabel}</Text>
-                                    <Button
-                                        icon={<FormClose />}
-                                        onClick={() => setOpenDetails(false)}
-                                        focusIndicator={false}
-                                        hoverIndicator={true}
-                                    />
-                                </Box>
-                                <Box
-                                    alignContent='start'
-                                    direction="row"
-                                    justify='start'
-                                    wrap
-                                >
-                                    {
-                                        hasVoters && voters.map((it) =>
-                                            <RemovableItemBox key={"vb_" + it.id}
-                                                label={it.name}
-                                                confirmText={onCancel ? `Annuler le vote de ${it.name} ?` : undefined}
-                                                onRemove={onCancel ? () => onCancel(it) : undefined} />)
-                                    }
-                                </Box>
-                            </Box>
-                        </Layer>
-                    )}
-            </Box>)}
-    </ResponsiveContext.Consumer>
-}
-
-
 class OpenPick extends Component {
 
     state = {
@@ -165,7 +72,7 @@ class OpenPick extends Component {
         vote: [],
         pickedInList: [],
         suggested: "",
-        // openNotif: false,
+        openToast: false
     }
 
     componentDidMount() {
@@ -173,6 +80,8 @@ class OpenPick extends Component {
             if (vote.exists) {
                 const voteData = vote.data();
                 this.setState({ vote: voteData });
+            } else {
+                this.setState({ vote: [] });
             }
         });
         this.props.FirebaseService.getDb().collection('picks').doc(this.state.pickId).onSnapshot(pick => {
@@ -186,7 +95,7 @@ class OpenPick extends Component {
                     isOrga: pickData.author.id === this.props.user.id
                 });
             } else {
-                this.setState({ loading: false, isError: true, errorMessage: "Impossible d'accèder à ce pick" })
+                this.setState({ loading: false, isError: true, errorMessage: "404" })
             }
         });
     }
@@ -213,17 +122,18 @@ class OpenPick extends Component {
             ).then(response => response.json());
             if ("error" in response) {
                 this.setState({ loading: false, isError: true, errorMessage: response.error });
+                this.props.addToast("Erreur lors de l'annulation du vote", { appearance: "error" })
             } else {
                 this.setState({ loading: false, isError: false });
+                this.props.addToast("Vote annulé", { appearance: "success" })
             }
         } catch (e) {
             this.setState({ loading: false, isError: true, errorMessage: e.message });
+            this.props.addToast("Erreur lors de l'annulation du vote", { appearance: "error" })
         }
     }
 
     handleSubmit = async ({ value }) => {
-
-
         await this.setState({
             isError: false,
             errorMessage: '',
@@ -253,11 +163,17 @@ class OpenPick extends Component {
             ).then(response => response.json());
             if ("error" in response) {
                 this.setState({ loading: false, isError: true, errorMessage: response.error });
+                this.props.addToast("Erreur lors de l'enregistrement du vote", { appearance: "error" })
             } else {
-                this.setState({ loading: false, isError: false });
+                this.setState({
+                    loading: false,
+                    isError: false,
+                });
+                this.props.addToast("Vote enregistré", { appearance: "success" })
             }
         } catch (e) {
             this.setState({ loading: false, isError: true, errorMessage: e.message });
+            this.props.addToast("Erreur lors de l'enregistrement du vote", { appearance: "error" })
         }
     }
 
@@ -272,7 +188,7 @@ class OpenPick extends Component {
                             <LabelAndValue label="Date" value={dayjs(pick.dateCreated).format('DD/MM/YYYY')} margin="xsmall" />
                             <LabelAndValue label="Organisateur" value={pick.author.name} margin="xsmall" />
                             <LabelAndValue label="Mode d'élection" value={pick.mode === "random" ? "Au hasard" : "A la majorité"} margin="xsmall" />
-                            <VotersBox2 voters={pick.voters} onCancel={isOrga ? this.cancelVote : undefined} margin="xsmall" />
+                            <VotersBox userId={this.props.user.id} voters={pick.voters} onCancel={isOrga ? this.cancelVote : undefined} margin="xsmall" />
                         </Box>
 
                         <PickStatusBar pick={pick} onClosePick={() => { }} onCancelPick={() => { }} />
@@ -308,5 +224,5 @@ class OpenPick extends Component {
     }
 }
 
-const WrappedComponent = withRouter(withFirebaseService(withAPIService(OpenPick)));
+const WrappedComponent = withRouter(withFirebaseService(withAPIService(withToast(OpenPick))));
 export default WrappedComponent;

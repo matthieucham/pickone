@@ -1,5 +1,7 @@
 import React, { useState, Component } from 'react';
 import { withRouter, Redirect, Route } from 'react-router-dom';
+import { ToastProvider, useToasts } from 'react-toast-notifications'
+
 import { Box, Button, Collapsible, Heading, Grommet, Layer, Main, Menu, Nav, ResponsiveContext, Text } from 'grommet';
 import { FormClose, User } from 'grommet-icons';
 import { hpe } from 'grommet-theme-hpe';
@@ -8,6 +10,8 @@ import { hpe } from 'grommet-theme-hpe';
 import { withAPIService, withFirebaseService } from './hoc';
 
 import { RouterButton, RouterAnchor } from './components/ext/RoutedControls';
+import NotificationToast from './components/lib/NotificationToast';
+
 import Sidebar from './components/sidebar/Sidebar';
 import Login from './components/pages/Login';
 import Register from './components/pages/Register';
@@ -51,8 +55,8 @@ const initialState = {
   showSidebar: false
 };
 
-const AppRoutes = ({ authenticated, user }) =>
-  (authenticated) ? (
+const AppRoutes = ({ authenticated, user }) => {
+  return (authenticated) ? (
     <Box flex>
       <Route exact path="/login"> <Redirect to="/dashboard" /></Route>
       <Route exact path="/register"><Redirect to="/dashboard" /></Route>
@@ -72,6 +76,13 @@ const AppRoutes = ({ authenticated, user }) =>
         <Route exact path="/register"><Register /></Route>
       </Box>
     )
+}
+
+const AppToast = ({ appearance, children }) => (
+  <div style={{ background: appearance === 'error' ? 'red' : 'green' }}>
+    {children}
+  </div>
+);
 
 class App extends Component {
 
@@ -135,7 +146,7 @@ class App extends Component {
           {size => (
             <Box fill="horizontal">
               <AppBar fill="horizontal">
-                <Heading level='2' margin='none'><RouterAnchor path="/" color="light-1">Pick1</RouterAnchor></Heading>
+                <Heading level='2' margin='none'><RouterAnchor path="/" color="light-1">On vote ?</RouterAnchor></Heading>
                 <Box direction="row">
                   <Button icon={<User />} onClick={() => this.setState({ showSidebar: !this.state.showSidebar })} />
                   {(authenticated) ? (
@@ -193,7 +204,12 @@ class App extends Component {
                       </Box>
                     </Layer>
                   )} */}
-                <AppRoutes user={user} authenticated={authenticated} />
+                <ToastProvider autoDismiss
+                  autoDismissTimeout={3000}
+                  components={{ Toast: NotificationToast }}
+                  placement="bottom-center">
+                  <AppRoutes user={user} authenticated={authenticated} />
+                </ToastProvider>
               </Main>
             </Box>
           )}
