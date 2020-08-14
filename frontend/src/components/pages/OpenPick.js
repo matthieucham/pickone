@@ -1,14 +1,12 @@
-import React, { Component, useState } from 'react';
+import React, { Component } from 'react';
 import dayjs from 'dayjs';
 import {
-    Box, Button, CheckBoxGroup, Collapsible, Form, FormField, Heading, Layer, Menu, RadioButtonGroup, ResponsiveContext, Text, TextInput
+    Box, Button, CheckBoxGroup, Form, FormField, Heading, Menu, RadioButtonGroup, Text, TextInput
 } from 'grommet';
 import { Trash } from 'grommet-icons';
 import { withRouter } from 'react-router-dom';
 
 import { withAPIService, withFirebaseService, withToast } from '../../hoc';
-import NotificationToast from "../lib/NotificationToast";
-import RemovableItemBox from "../lib/RemovableItemBox";
 import PickStatusBar from "../lib/PickStatusBar";
 import LabelAndValue from "../lib/LabelAndValue";
 import ConfirmationLayer from "../lib/ConfirmationLayer";
@@ -59,6 +57,7 @@ const VotersBox = ({ userId, voters, onCancel, ...props }) => {
         )}
     </Box>
 }
+
 
 
 class OpenPick extends Component {
@@ -122,14 +121,14 @@ class OpenPick extends Component {
             ).then(response => response.json());
             if ("error" in response) {
                 this.setState({ loading: false, isError: true, errorMessage: response.error });
-                this.props.addToast("Erreur lors de l'annulation du vote", { appearance: "error" })
+                this.props.addToast(`Un problème est survenu lors de la suppression du vote de ${vote.name}`, { appearance: "error" })
             } else {
                 this.setState({ loading: false, isError: false });
-                this.props.addToast("Vote annulé", { appearance: "success" })
+                this.props.addToast(`Vote de ${vote.name} supprimé`, { appearance: "success" })
             }
         } catch (e) {
             this.setState({ loading: false, isError: true, errorMessage: e.message });
-            this.props.addToast("Erreur lors de l'annulation du vote", { appearance: "error" })
+            this.props.addToast(`Un problème est survenu lors de la suppression du vote de ${vote.name}`, { appearance: "error" })
         }
     }
 
@@ -154,7 +153,7 @@ class OpenPick extends Component {
                 `picks/${this.state.pickId}/vote`,
                 user.idToken,
                 {
-                    method: 'POST',
+                    method: 'PUT',
                     body: JSON.stringify({ picked: values }),
                     headers: {
                         'content-type': 'application/json'
@@ -177,6 +176,70 @@ class OpenPick extends Component {
         }
     }
 
+    cancel = async () => {
+        this.setState({
+            isError: false,
+            errorMessage: '',
+            loading: true,
+        });
+
+        const user = this.props.user;
+        try {
+            const response = await this.props.APIService.callAPIWithAuth(
+                `picks/${this.state.pickId}`,
+                user.idToken,
+                {
+                    method: 'PUT',
+                    headers: {
+                        'content-type': 'application/json'
+                    }
+                }
+            ).then(response => response.json());
+            if ("error" in response) {
+                this.setState({ loading: false, isError: true, errorMessage: response.error });
+                this.props.addToast("Erreur lors de l'annulation du vote", { appearance: "error" })
+            } else {
+                this.setState({ loading: false, isError: false });
+                this.props.addToast(`Vote ${this.state.pick.title} annulé`, { appearance: "success" })
+            }
+        } catch (e) {
+            this.setState({ loading: false, isError: true, errorMessage: e.message });
+            this.props.addToast("Erreur lors de l'annulation du vote", { appearance: "error" })
+        }
+    }
+
+    terminate = async () => {
+        this.setState({
+            isError: false,
+            errorMessage: '',
+            loading: true,
+        });
+
+        const user = this.props.user;
+        try {
+            const response = await this.props.APIService.callAPIWithAuth(
+                `picks/${this.state.pickId}`,
+                user.idToken,
+                {
+                    method: 'POST',
+                    headers: {
+                        'content-type': 'application/json'
+                    }
+                }
+            ).then(response => response.json());
+            if ("error" in response) {
+                this.setState({ loading: false, isError: true, errorMessage: response.error });
+                this.props.addToast("Erreur lors de la clôture du vote", { appearance: "error" })
+            } else {
+                this.setState({ loading: false, isError: false });
+                this.props.addToast(`Vote ${this.state.pick.title} terminé`, { appearance: "success" })
+            }
+        } catch (e) {
+            this.setState({ loading: false, isError: true, errorMessage: e.message });
+            this.props.addToast("Erreur lors de la clôture du vote", { appearance: "error" })
+        }
+    }
+
     render() {
         const { pick, pickedInList, suggested, loading, isOrga } = this.state;
         return (
@@ -191,7 +254,9 @@ class OpenPick extends Component {
                             <VotersBox userId={this.props.user.id} voters={pick.voters} onCancel={isOrga ? this.cancelVote : undefined} margin="xsmall" />
                         </Box>
 
-                        <PickStatusBar pick={pick} onClosePick={() => { }} onCancelPick={() => { }} />
+                        <PickStatusBar pick={pick}
+                            onClosePick={isOrga ? this.terminate : undefined}
+                            onCancelPick={isOrga ? this.cancel : undefined} />
                         <Form pad="small" align="center" onSubmit={this.handleSubmit}>
                             <FormField label="Choix" name="picked" required>
 
@@ -215,9 +280,6 @@ class OpenPick extends Component {
                         </Form>
                     </Box>
                 )}
-                {/* {this.state.openNotif &&
-                    <NotificationLayer text={`${this.state.newVoterName} a voté`} status="ok" onClose={() => this.setState({ openNotif: false })} />
-                } */}
             </Box>
 
         );

@@ -78,12 +78,6 @@ const AppRoutes = ({ authenticated, user }) => {
     )
 }
 
-const AppToast = ({ appearance, children }) => (
-  <div style={{ background: appearance === 'error' ? 'red' : 'green' }}>
-    {children}
-  </div>
-);
-
 class App extends Component {
 
   state = initialState;
@@ -205,9 +199,9 @@ class App extends Component {
                     </Layer>
                   )} */}
                 <ToastProvider autoDismiss
-                  autoDismissTimeout={3000}
+                  autoDismissTimeout={6000}
                   components={{ Toast: NotificationToast }}
-                  placement="bottom-center">
+                  placement="bottom-right">
                   <AppRoutes user={user} authenticated={authenticated} />
                 </ToastProvider>
               </Main>

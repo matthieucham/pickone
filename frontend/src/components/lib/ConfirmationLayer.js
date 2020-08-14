@@ -4,7 +4,7 @@ import {
 } from 'grommet';
 import { Trash } from 'grommet-icons';
 
-const ConfirmationLayer = ({ title, text, actionLabel, onConfirmAction, onCancelAction }) => (
+const ConfirmationLayer = ({ title, text, actionLabel, cancelLabel, onConfirmAction, onCancelAction }) => (
     <Layer position="center" onClickOutside={onCancelAction} onEsc={onCancelAction}>
         <Box pad="medium" gap="small" width="medium">
             <Heading level={3} margin="none">{title}</Heading>
@@ -17,7 +17,7 @@ const ConfirmationLayer = ({ title, text, actionLabel, onConfirmAction, onCancel
                 justify="end"
                 pad={{ top: 'medium', bottom: 'small' }}
             >
-                <Button label="Annuler" onClick={onCancelAction} color="dark-3" />
+                <Button label={cancelLabel || "Annuler"} onClick={onCancelAction} color="dark-3" />
                 <Button
                     label={
                         <Text color="white">

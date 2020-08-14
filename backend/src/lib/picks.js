@@ -93,6 +93,10 @@ const getPickOr404 = async (db, pickId, openOnly) => {
             // Déjà résolu => error
             throw new PickNotFoundError(pickId);
         }
+        if (pickData.cancelled) {
+            // Vote annulé => error
+            throw new PickNotFoundError(pickId);
+        }
         if (pickData.limit) {
             if (dayjs(new Date()).isAfter(dayjs(pickData.limit))) {
                 // Limite déjà passée  => error
@@ -135,6 +139,7 @@ const vote = async ({ admin }, request, response) => {
     }
 
     const pickData = await getPickOr404(db, request.params.pickId, true)
+
     try {
         validate(request.body, pickData);
     } catch (error) {
@@ -191,6 +196,7 @@ const cancelVote = async ({ admin }, request, response) => {
             error: "Forbidden"
         })
     }
+
     try {
         validate(request.body);
     } catch (error) {
@@ -223,8 +229,103 @@ const cancelVote = async ({ admin }, request, response) => {
     });
 }
 
+const cancel = async ({ admin }, request, response) => {
+    const db = admin.firestore();
+    const pickData = await getPickOr404(db, request.params.pickId, true)
+    // TODO : use rule instead of this check:
+    if (request.user.uid !== pickData.author.id) {
+        return response.status(403).send({
+            error: "Forbidden"
+        })
+    }
+    try {
+        const result = {
+            cancelled: false,
+        }
+        var pickRef = db.collection(`picks`).doc(request.params.pickId);
+        await pickRef.update({ cancelled: true });
+        result.cancelled = true;
+        return response.send(result);
+    } catch (e) {
+        return response.status(500).send({
+            error: e.message
+        });
+    }
+}
+
+function rand(items) {
+    // "|" for a kinda "int div"
+    return items[items.length * Math.random() | 0];
+}
+
+/**
+ *  Sorting an array order by frequency of occurence in javascript
+ *  @param {array} array An array to sort
+ *  @returns {array} array of item order by frequency
+ **/
+function sortByFrequency(array) {
+    var frequency = {};
+    var sortAble = [];
+    var newArr = [];
+
+    array.forEach(function (value) {
+        if (value in frequency)
+            frequency[value] = frequency[value] + 1;
+        else
+            frequency[value] = 1;
+    });
+    for (var key in frequency) {
+        sortAble.push([key, frequency[key]])
+    }
+    sortAble.sort(function (a, b) {
+        return b[1] - a[1]
+    })
+    sortAble.forEach(function (obj) {
+        for (var i = 0; i < obj[1]; i++) {
+            newArr.push(obj[0]);
+        }
+    })
+    return newArr;
+}
+
+const resolve = async ({ admin }, request, response) => {
+    const db = admin.firestore();
+    try {
+        const pickData = await getPickOr404(db, request.params.pickId, true)
+        // grab all votes:
+        const query = await db.collection(`picks/${request.params.pickId}/votes`).get()
+        let winner;
+        const bag = [];
+        query.forEach((doc) => {
+            bag.push([...doc.data().choices]);
+        });
+        if (pickData.mode === "random") {
+            // Build a big bag with all values, then pick one
+            winner = rand(bag);
+        } else if (pickData.mode === "majority") {
+            sorted = sortByFrequency(bag);
+            winner = sorted[0];
+        }
+
+        const result = {
+            resolved: false,
+        }
+        var pickRef = db.collection(`picks`).doc(request.params.pickId);
+        await pickRef.update({ result: winner });
+        result.resolved = true;
+        return response.send(result);
+    } catch (e) {
+        console.log(e.message);
+        return response.status(500).send({
+            error: e.message
+        });
+    }
+}
+
 module.exports = {
     create,
     vote,
-    cancelVote
+    cancelVote,
+    cancel,
+    resolve
 }
