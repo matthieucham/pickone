@@ -255,7 +255,8 @@ const cancel = async ({ admin }, request, response) => {
 
 function rand(items) {
     // "|" for a kinda "int div"
-    return items[items.length * Math.random() | 0];
+    var item = items[Math.floor(Math.random() * items.length)];
+    return item;
 }
 
 /**
@@ -297,7 +298,7 @@ const resolve = async ({ admin }, request, response) => {
         let winner;
         const bag = [];
         query.forEach((doc) => {
-            bag.push([...doc.data().choices]);
+            bag.push(...doc.data().choices);
         });
         if (pickData.mode === "random") {
             // Build a big bag with all values, then pick one

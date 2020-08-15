@@ -10,6 +10,7 @@ import { withAPIService, withFirebaseService, withToast } from '../../hoc';
 import PickStatusBar from "../lib/PickStatusBar";
 import LabelAndValue from "../lib/LabelAndValue";
 import ConfirmationLayer from "../lib/ConfirmationLayer";
+import LoadingLayer from "../lib/LoadingLayer";
 
 
 const VotersBox = ({ userId, voters, onCancel, ...props }) => {
@@ -59,6 +60,13 @@ const VotersBox = ({ userId, voters, onCancel, ...props }) => {
 }
 
 
+// class OpenPickForm extends Component {
+
+//     render() {
+
+//     }
+// }
+
 
 class OpenPick extends Component {
 
@@ -67,6 +75,7 @@ class OpenPick extends Component {
         isError: false,
         errorMessage: '',
         loading: true,
+        pickFound: false,
         pick: {},
         vote: [],
         pickedInList: [],
@@ -88,6 +97,7 @@ class OpenPick extends Component {
                 const pickData = pick.data();
                 this.setState({
                     loading: false,
+                    pickFound: true,
                     pick: pickData,
                     pickedInList: this.state.vote.choices ? this.state.vote.choices.filter(v => pickData.choices.includes(v)) : [],
                     suggested: this.state.vote.choices ? this.state.vote.choices.filter(v => !pickData.choices.includes(v)).shift() : "",
@@ -241,10 +251,10 @@ class OpenPick extends Component {
     }
 
     render() {
-        const { pick, pickedInList, suggested, loading, isOrga } = this.state;
+        const { pick, pickFound, pickedInList, suggested, loading, isOrga } = this.state;
         return (
             <Box align="center" fill="horizontal">
-                {(!loading) && (
+                {pickFound && (
                     <Box align="center" fill="horizontal">
                         <Heading level="4">{pick.title}</Heading>
                         <Box pad="medium" direction="row" wrap>
@@ -280,6 +290,9 @@ class OpenPick extends Component {
                         </Form>
                     </Box>
                 )}
+                {
+                    loading && <LoadingLayer />
+                }
             </Box>
 
         );

@@ -201,7 +201,7 @@ class App extends Component {
                 <ToastProvider autoDismiss
                   autoDismissTimeout={6000}
                   components={{ Toast: NotificationToast }}
-                  placement="bottom-right">
+                  placement="bottom-center">
                   <AppRoutes user={user} authenticated={authenticated} />
                 </ToastProvider>
               </Main>
