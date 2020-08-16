@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import dayjs from 'dayjs';
 import {
-    Box, Button, CheckBoxGroup, Form, FormField, Heading, Menu, RadioButtonGroup, Text, TextInput
+    Box, Button, CheckBoxGroup, Distribution, Form, FormField, Heading, Menu, RadioButtonGroup, Text, TextInput
 } from 'grommet';
 import { Trash } from 'grommet-icons';
 import { withRouter } from 'react-router-dom';
@@ -60,13 +60,74 @@ const VotersBox = ({ userId, voters, onCancel, ...props }) => {
 }
 
 
-// class OpenPickForm extends Component {
+const OpenPickForm = ({ choices, values, suggest, onSubmit }) => {
+    const [pickedList, setPickedList] = React.useState(values ? values.filter(v => choices.includes(v)) : []);
+    const [suggested, setSuggested] = React.useState(values ? values.filter(v => !choices.includes(v)).shift() : "");
+    return (<Form pad="small" align="center" onSubmit={onSubmit}>
+        <FormField label="Choix" name="picked" required>
+            {(true) ?
+                (<CheckBoxGroup name="picked" options={choices} value={pickedList}
+                    onChange={({ value: nextValue }) => setPickedList(nextValue)} />)
+                :
+                (<RadioButtonGroup name="picked" options={choices} value={pickedList}
+                    onChange={({ value: nextValue }) => setPickedList(nextValue)} />)
+            }
+        </FormField>
+        {
+            suggest &&
+            <FormField label="Une autre suggestion ?" name="suggested">
+                <TextInput name="suggested" size="large" value={suggested} onChange={event => setSuggested(event.target.value)} />
+            </FormField>
+        }
 
-//     render() {
+        <Button type="submit" label="Voter" primary />
 
-//     }
-// }
+    </Form>)
+}
 
+const ResultPanel = ({ winner, scores }) => {
+    console.log(Object.entries(scores));
+    let totalVotes = Object.entries(scores).reduce((total, sc) => total + sc[1], 0);
+    console.log(totalVotes);
+    const distrival = Object.entries(scores).map(
+        ([choice, score]) => (
+            {
+                value: score,
+                color: (choice === winner ? 'brand' : 'light-3'),
+                label: choice,
+                pct: (Math.round(score * 100.0 / totalVotes) / 100) * 100
+            }
+        ));
+
+    return <Box justify="center" align="center">
+        <Box width="medium" align="center">
+            <Text>Victoire de ...</Text>
+            <Box animation={{
+                type: "fadeIn",
+                delay: 0,
+                duration: 5000
+            }}>
+                <Heading level="3">{winner}</Heading>
+            </Box>
+        </Box>
+        <Box width="large" align="center"
+            animation={{
+                type: "fadeIn",
+                delay: 0,
+                duration: 5000
+            }}>
+            <Distribution values={distrival}>
+                {value => (
+                    <Box pad="medium" align="center" background={value.color} fill>
+                        <Text size="small">{value.label}</Text>
+                        <Text weight="bold" size="large">{value.pct} %</Text>
+                        <Text size="small">{value.value} voix</Text>
+                    </Box>
+                )}
+            </Distribution>
+        </Box>
+    </Box>
+}
 
 class OpenPick extends Component {
 
@@ -78,8 +139,6 @@ class OpenPick extends Component {
         pickFound: false,
         pick: {},
         vote: [],
-        pickedInList: [],
-        suggested: "",
         openToast: false
     }
 
@@ -99,8 +158,6 @@ class OpenPick extends Component {
                     loading: false,
                     pickFound: true,
                     pick: pickData,
-                    pickedInList: this.state.vote.choices ? this.state.vote.choices.filter(v => pickData.choices.includes(v)) : [],
-                    suggested: this.state.vote.choices ? this.state.vote.choices.filter(v => !pickData.choices.includes(v)).shift() : "",
                     isOrga: pickData.author.id === this.props.user.id
                 });
             } else {
@@ -142,7 +199,7 @@ class OpenPick extends Component {
         }
     }
 
-    handleSubmit = async ({ value }) => {
+    onChoicesSubmitted = async ({ value }) => {
         await this.setState({
             isError: false,
             errorMessage: '',
@@ -157,7 +214,6 @@ class OpenPick extends Component {
         }
 
         const user = this.props.user;
-        let responseJSON = { error: "" };
         try {
             const response = await this.props.APIService.callAPIWithAuth(
                 `picks/${this.state.pickId}/vote`,
@@ -251,7 +307,7 @@ class OpenPick extends Component {
     }
 
     render() {
-        const { pick, pickFound, pickedInList, suggested, loading, isOrga } = this.state;
+        const { pick, pickFound, vote, loading, isOrga } = this.state;
         return (
             <Box align="center" fill="horizontal">
                 {pickFound && (
@@ -267,27 +323,23 @@ class OpenPick extends Component {
                         <PickStatusBar pick={pick}
                             onClosePick={isOrga ? this.terminate : undefined}
                             onCancelPick={isOrga ? this.cancel : undefined} />
-                        <Form pad="small" align="center" onSubmit={this.handleSubmit}>
-                            <FormField label="Choix" name="picked" required>
 
-                                {(true) ?
-                                    (<CheckBoxGroup name="picked" options={pick.choices} value={pickedInList}
-                                        onChange={({ value: nextValue }) => this.setState({ pickedInList: nextValue })} />)
-                                    :
-                                    (<RadioButtonGroup name="picked" options={pick.choices} value={pickedInList}
-                                        onChange={({ value: nextValue }) => this.setState({ pickedInList: nextValue })} />)
-                                }
-                            </FormField>
-                            {
-                                pick.suggest &&
-                                <FormField label="Une autre suggestion ?" name="suggested">
-                                    <TextInput name="suggested" size="large" value={suggested} onChange={event => this.setState({ suggested: event.target.value })} />
-                                </FormField>
-                            }
+                        {
+                            !pick.result && !pick.cancelled &&
+                            <OpenPickForm choices={pick.choices} values={vote.choices || []} suggest={pick.suggest} onSubmit={this.onChoicesSubmitted} />
+                        }
+                        {
+                            pick.cancelled &&
+                            <Box justify="center">
+                                <Text weight="bold">Vote annulé par l'organisateur</Text>
+                                <Text size="small">Parce que la démocratie, c'est très surfait</Text>
+                            </Box>
+                        }
+                        {
+                            pick.result && !pick.cancelled &&
+                            <ResultPanel winner={pick.result.winner} scores={pick.result.scores} />
+                        }
 
-                            <Button type="submit" label="Voter" disabled={loading} primary />
-
-                        </Form>
                     </Box>
                 )}
                 {

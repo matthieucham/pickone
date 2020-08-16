@@ -307,12 +307,19 @@ const resolve = async ({ admin }, request, response) => {
             sorted = sortByFrequency(bag);
             winner = sorted[0];
         }
+        let scores = bag.reduce((scoresMap, vote) => (
+            vote in scoresMap ? scoresMap[vote] = scoresMap[vote] + 1 : scoresMap[vote] = 1, scoresMap), {})
 
         const result = {
             resolved: false,
         }
         var pickRef = db.collection(`picks`).doc(request.params.pickId);
-        await pickRef.update({ result: winner });
+        await pickRef.update({
+            result: {
+                winner: winner,
+                scores: scores
+            }
+        });
         result.resolved = true;
         return response.send(result);
     } catch (e) {
