@@ -13,7 +13,7 @@ import ConfirmationLayer from "../lib/ConfirmationLayer";
 import LoadingLayer from "../lib/LoadingLayer";
 
 
-const VotersBox = ({ userId, voters, onCancel, ...props }) => {
+const VotersBox = ({ userId, voters, hideAction, onCancel, ...props }) => {
     const [openConfirm, setOpenConfirm] = React.useState();
     const [clickedVoter, setClickedVoter] = React.useState();
     const onCloseConfirm = () => setOpenConfirm(undefined);
@@ -35,10 +35,10 @@ const VotersBox = ({ userId, voters, onCancel, ...props }) => {
         votersItems = voters.map(v => {
             return {
                 label: <Box pad="small" alignSelf="center">{v.name}</Box>,
-                icon: (onCancel && userId !== v.id) ? <Box alignSelf="center"><Trash /></Box> : undefined,
+                icon: (!hideAction && onCancel && userId !== v.id) ? <Box alignSelf="center"><Trash /></Box> : undefined,
                 gap: "small",
                 reverse: true,
-                onClick: (onCancel && userId !== v.id) ? () => { setClickedVoter(v); setOpenConfirm(true) } : undefined
+                onClick: (!hideAction && onCancel && userId !== v.id) ? () => { setClickedVoter(v); setOpenConfirm(true) } : undefined
             }
         });
     }
@@ -86,9 +86,8 @@ const OpenPickForm = ({ choices, values, suggest, onSubmit }) => {
 }
 
 const ResultPanel = ({ winner, scores }) => {
-    console.log(Object.entries(scores));
     let totalVotes = Object.entries(scores).reduce((total, sc) => total + sc[1], 0);
-    console.log(totalVotes);
+
     const distrival = Object.entries(scores).map(
         ([choice, score]) => (
             {
@@ -98,6 +97,7 @@ const ResultPanel = ({ winner, scores }) => {
                 pct: (Math.round(score * 100.0 / totalVotes) / 100) * 100
             }
         ));
+    console.log(distrival);
 
     return <Box justify="center" align="center">
         <Box width="medium" align="center">
@@ -116,7 +116,7 @@ const ResultPanel = ({ winner, scores }) => {
                 delay: 0,
                 duration: 5000
             }}>
-            <Distribution values={distrival}>
+            <Distribution values={distrival} fill>
                 {value => (
                     <Box pad="medium" align="center" background={value.color} fill>
                         <Text size="small">{value.label}</Text>
@@ -317,7 +317,11 @@ class OpenPick extends Component {
                             <LabelAndValue label="Date" value={dayjs(pick.dateCreated).format('DD/MM/YYYY')} margin="xsmall" />
                             <LabelAndValue label="Organisateur" value={pick.author.name} margin="xsmall" />
                             <LabelAndValue label="Mode d'élection" value={pick.mode === "random" ? "Au hasard" : "A la majorité"} margin="xsmall" />
-                            <VotersBox userId={this.props.user.id} voters={pick.voters} onCancel={isOrga ? this.cancelVote : undefined} margin="xsmall" />
+                            <VotersBox userId={this.props.user.id}
+                                voters={pick.voters}
+                                onCancel={isOrga ? this.cancelVote : undefined}
+                                hideAction={pick.result || pick.cancelled}
+                                margin="xsmall" />
                         </Box>
 
                         <PickStatusBar pick={pick}

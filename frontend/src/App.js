@@ -1,10 +1,24 @@
-import React, { useState, Component } from 'react';
+import React, { Component } from 'react';
 import { withRouter, Redirect, Route } from 'react-router-dom';
-import { ToastProvider, useToasts } from 'react-toast-notifications'
+import { ToastProvider } from 'react-toast-notifications'
 
-import { Box, Button, Collapsible, Heading, Grommet, Layer, Main, Menu, Nav, ResponsiveContext, Text } from 'grommet';
-import { FormClose, User } from 'grommet-icons';
-import { hpe } from 'grommet-theme-hpe';
+import {
+  Anchor,
+  Box,
+  Button,
+  Collapsible,
+  Grommet,
+  Header,
+  Heading,
+  Layer,
+  List,
+  Main,
+  Nav,
+  ResponsiveContext,
+  Sidebar,
+  Text
+} from 'grommet';
+import { FormClose, Chat, User } from 'grommet-icons';
 
 /* Load local files */
 import { withAPIService, withFirebaseService } from './hoc';
@@ -12,13 +26,12 @@ import { withAPIService, withFirebaseService } from './hoc';
 import { RouterButton, RouterAnchor } from './components/ext/RoutedControls';
 import NotificationToast from './components/lib/NotificationToast';
 
-import Sidebar from './components/sidebar/Sidebar';
 import Login from './components/pages/Login';
 import Register from './components/pages/Register';
 import NewPick from './components/pages/NewPick';
 import Dashboard from './components/pages/Dashboard';
 import OpenPick from './components/pages/OpenPick';
-//import Profile from './components/pages/Profile';
+import Home from './components/pages/Home';
 
 const theme = {
   global: {
@@ -33,19 +46,73 @@ const theme = {
   },
 };
 
-const AppBar = (props) => (
-  <Box
-    tag='header'
-    direction='row'
-    align='center'
-    justify='between'
-    background='brand'
-    pad={{ left: 'medium', right: 'small', vertical: 'small' }}
-    elevation='medium'
+const AppHeader = ({ hasOpenButton, onOpenButtonClick, user, ...props }) => (
+  <Header
+    direction="row"
+    fill="horizontal"
     style={{ zIndex: '1' }}
+    border={{
+      color: "dark-3",
+      size: "xsmall",
+      style: "solid",
+      side: "bottom"
+    }}
     {...props}
-  />
-);
+    pad="xsmall"
+    height="xxsmall"
+  >
+    <Box direction="row" align="center">
+      {hasOpenButton &&
+        <Button icon={<Chat size="medium" color="brand" />}
+          onClick={onOpenButtonClick}
+          pad="xsmall" />
+      }
+      <RouterAnchor path="/">On vote ?</RouterAnchor>
+    </Box>
+    <Nav direction="row">
+      {(user) ? (
+        <Text size="small">{user.displayName}</Text>
+      ) : (
+          <Anchor icon={<User />} href="/login" hoverIndicator />
+        )
+      }
+    </Nav>
+
+  </Header>
+)
+
+const AppSidebar = ({ user, onCloseButtonClick, onLogout, ...props }) => (
+  <Sidebar width="medium" background="brand" pad="xsmall"
+    footer=
+    {<Box align="start" pad="xsmall">
+      <Button icon={<User size="medium" color="light-1" />}
+        label="Log out"
+        onClick={onLogout}
+        pad="xsmall"
+        plain />
+    </Box>}
+    {...props}
+  >
+    <Header>
+      <Button icon={<Chat size="medium" color="light-1" />}
+        onClick={onCloseButtonClick}
+        pad="xsmall" />
+
+      <Button icon={<FormClose size="medium" color="light-1" />}
+        onClick={onCloseButtonClick}
+        pad="xsmall" />
+    </Header>
+    <Box>
+      <List primaryKey="label"
+        data={[
+          { label: "Mes votes" },
+          { label: "Nouveau vote" },
+          { label: "Rejoindre un vote" },
+          { label: "Mes listes" }
+        ]}></List>
+    </Box>
+  </Sidebar>
+)
 
 const initialState = {
   authenticated: false,
@@ -69,11 +136,13 @@ const AppRoutes = ({ authenticated, user }) => {
       <Route exact path="/pick/:id">
         <OpenPick user={user} />
       </Route>
+      <Route exact path="/"><Home /></Route>
     </Box>
   ) : (
       <Box flex align='center' justify='center'>
         <Route exact path="/login"> <Login /></Route>
         <Route exact path="/register"><Register /></Route>
+        <Route exact path="/"><Home /></Route>
       </Box>
     )
 }
@@ -138,74 +207,34 @@ class App extends Component {
       <Grommet theme={theme} full>
         <ResponsiveContext.Consumer>
           {size => (
-            <Box fill="horizontal">
-              <AppBar fill="horizontal">
-                <Heading level='2' margin='none'><RouterAnchor path="/" color="light-1">On vote ?</RouterAnchor></Heading>
-                <Box direction="row">
-                  <Button icon={<User />} onClick={() => this.setState({ showSidebar: !this.state.showSidebar })} />
-                  {(authenticated) ? (
-                    <Menu
-                      dropProps={{
-                        align: { top: 'bottom', left: 'left' },
-                        elevation: 'xlarge',
-                      }}
-                      label={user.displayName}
-                      items={[
-                        { label: 'Logout', onClick: this.signOut },
-                      ]}
-                    />
-                  ) : (
-                      <RouterButton path="/login" icon={<User />} label="Login"></RouterButton>
-                    )
-                  }
-                </Box>
-              </AppBar>
-              <Main direction="row" flex overflow={{ horizontal: 'hidden' }}>
-                {/* {(!this.state.showSidebar || size !== 'small') ? (
-                  <Collapsible direction="horizontal" open={this.state.showSidebar}>
-                    <Box
-                      flex
-                      width='medium'
-                      background='light-2'
-                      elevation='small'
-                      align='center'
-                      justify='center'
-                    >
-                      <Sidebar />
-                    </Box>
-                  </Collapsible>
-                ) : (
-                    <Layer>
-                      <Box
-                        background='light-2'
-                        tag='header'
-                        justify='end'
-                        align='center'
-                        direction='row'
-                      >
-                        <Button
-                          icon={<FormClose />}
-                          onClick={() => this.setState({ showSidebar: false })}
-                        />
-                      </Box>
-                      <Box
-                        fill
-                        background='light-2'
-                        align='center'
-                        justify='center'
-                      >
-                        <Sidebar />
-                      </Box>
-                    </Layer>
-                  )} */}
+            <Main direction="row" flex overflow={{ horizontal: 'hidden' }}>
+              {(!this.state.showSidebar || size !== 'small') ? (
+                <Collapsible direction="horizontal" open={this.state.showSidebar}>
+                  <AppSidebar onCloseButtonClick={() => this.setState({ showSidebar: false })}
+                    onLogout={this.signOut} />
+                </Collapsible>
+              ) : (
+                  <Layer>
+                    <AppSidebar onCloseButtonClick={() => this.setState({ showSidebar: false })}
+                      onLogout={this.signOut}
+                      fill />
+                  </Layer>
+                )}
+              <Box fill="horizontal">
+                <AppHeader
+                  hasOpenButton={!this.state.showSidebar}
+                  onOpenButtonClick={() => this.setState({ showSidebar: true })}
+                  user={user}
+                />
+
                 <ToastProvider autoDismiss
                   autoDismissTimeout={6000}
                   components={{ Toast: NotificationToast }}
                   placement="bottom-center">
                   <AppRoutes user={user} authenticated={authenticated} />
                 </ToastProvider>
-              </Main>
-            </Box>
+              </Box>
+            </Main>
           )}
         </ResponsiveContext.Consumer>
       </Grommet >
