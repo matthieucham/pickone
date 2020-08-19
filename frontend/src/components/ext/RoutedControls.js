@@ -1,8 +1,8 @@
 // https://github.com/grommet/grommet/issues/2855
 import * as React from "react";
-import { RouteComponentProps, withRouter } from "react-router";
+import { withRouter } from "react-router";
 
-import { Anchor, AnchorProps, Button, ButtonProps } from "grommet";
+import { Anchor, Button } from "grommet";
 
 
 const RouterAnchorBase = (props) => {

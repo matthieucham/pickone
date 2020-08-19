@@ -1,10 +1,7 @@
 import React, { Component } from 'react';
-import PropTypes from 'prop-types';
 import {
     Box, Button, Form, FormField, Heading, Text, TextInput
 } from 'grommet';
-
-import firebase from 'firebase/app';
 
 import { withFirebaseService } from '../../hoc';
 import SocialNetworks from '../login/SocialNetworks';
@@ -19,7 +16,7 @@ class Register extends Component {
     }
 
     validate = (value) => {
-        if (value.password != value.confirm) {
+        if (value.password !== value.confirm) {
             this.setState({
                 errorMessage: 'Le mot de passe et sa confirmation doivent être identiques',
                 isError: true,
@@ -63,7 +60,7 @@ class Register extends Component {
         return (
             <Box>
                 <Heading level="3">Inscription</Heading>
-                <Box fill align="center" justify="center">
+                <Box align="center" justify="center">
                     <Box width="medium">
                         <Form
                             onSubmit={this.handleSubmit}

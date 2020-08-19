@@ -1,6 +1,6 @@
-import React, { Component, useState } from 'react';
+import React, { Component } from 'react';
 import {
-    Box, Button, CheckBox, Form, FormField, Heading, RadioButtonGroup, Text, TextArea, TextInput
+    Box, Button, CheckBox, Form, FormField, Heading, RadioButtonGroup, Text, TextInput
 } from 'grommet';
 import { Group, Risk } from 'grommet-icons';
 import { withRouter } from 'react-router-dom';
@@ -28,7 +28,6 @@ class NewPick extends Component {
         });
 
         const user = this.props.user;
-        let responseJSON = { error: "" };
         try {
             const response = await this.props.APIService.callAPIWithAuth(
                 'picks/',
@@ -103,7 +102,7 @@ class NewPick extends Component {
                                 </FormField>
                             )}
 
-                            <FormField label="Choix possibles" name="choices" error={choices.length == 0 ? "Ce champ est requis" : ""}>
+                            <FormField label="Choix possibles" name="choices" error={choices.length === 0 ? "Ce champ est requis" : ""}>
 
                                 <ItemsField value={choices}
                                     onChange={(val) => this.setState({ choices: val })} />

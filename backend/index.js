@@ -17,12 +17,12 @@ const context = {
     admin
 }
 
-app.post('/', (req, res) => picks.create(context, req, res));
-app.put('/:pickId/vote', (req, res) => picks.vote(context, req, res));
 app.delete('/:pickId/vote/:voteId', (req, res) => picks.cancelVote(context, req, res));
-app.put('/:pickId', (req, res) => picks.cancel(context, req, res));
+app.put('/:pickId/vote', (req, res) => picks.vote(context, req, res));
+app.post('/registrations/', (req, res) => picks.createRegistration(context, req, res));
 app.post('/:pickId', (req, res) => picks.resolve(context, req, res));
-
+app.put('/:pickId', (req, res) => picks.cancel(context, req, res));
+app.post('/', (req, res) => picks.create(context, req, res));
 
 exports.picks = functions.https.onRequest(app);
 

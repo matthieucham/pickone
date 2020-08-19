@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import PropTypes from 'prop-types';
 import {
     Box, Button
 } from 'grommet';
@@ -40,7 +39,7 @@ class SocialNetworks extends Component {
     }
 
     render() {
-        return <Box direction="row" justify="center" pad="medium" gap="small" fill>
+        return <Box direction="row" justify="center" pad="medium" gap="small">
             <Button type="submit" label="Google" icon={<Google />} onClick={this.handleGoogle} />
             <Button type="submit" label="Facebook" icon={<Facebook />} />
         </Box>

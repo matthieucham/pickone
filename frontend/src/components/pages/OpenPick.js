@@ -50,7 +50,7 @@ const VotersBox = ({ userId, voters, hideAction, onCancel, ...props }) => {
         }}
             label={<Text weight="bold">{summaryLabel}</Text>}
             items={votersItems}
-            disabled={votersItems.length == 0}
+            disabled={votersItems.length === 0}
             focusIndicator={false} />
         {openConfirm && (
             <ConfirmationLayer onCancelAction={onCloseConfirm} onConfirmAction={onConfirmAndClose}

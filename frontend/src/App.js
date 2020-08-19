@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { withRouter, Redirect, Route } from 'react-router-dom';
+import { withRouter, Redirect, Route, Switch, useHistory } from 'react-router-dom';
 import { ToastProvider } from 'react-toast-notifications'
 
 import {
@@ -9,21 +9,18 @@ import {
   Collapsible,
   Grommet,
   Header,
-  Heading,
   Layer,
   List,
   Main,
-  Nav,
   ResponsiveContext,
   Sidebar,
   Text
 } from 'grommet';
-import { FormClose, Chat, User } from 'grommet-icons';
+import { Chat, FormClose, Menu, User } from 'grommet-icons';
 
 /* Load local files */
 import { withAPIService, withFirebaseService } from './hoc';
 
-import { RouterButton, RouterAnchor } from './components/ext/RoutedControls';
 import NotificationToast from './components/lib/NotificationToast';
 
 import Login from './components/pages/Login';
@@ -61,58 +58,62 @@ const AppHeader = ({ hasOpenButton, onOpenButtonClick, user, ...props }) => (
     pad="xsmall"
     height="xxsmall"
   >
-    <Box direction="row" align="center">
-      {hasOpenButton &&
-        <Button icon={<Chat size="medium" color="brand" />}
+    <Box align="center">
+      <Anchor href="/" color="brand" icon={<Chat />} label="On vote ?" />
+    </Box>
+    <Box align="center">
+      {(user) ? (
+        hasOpenButton &&
+        <Button icon={<Menu color="brand" />}
           onClick={onOpenButtonClick}
           pad="xsmall" />
-      }
-      <RouterAnchor path="/">On vote ?</RouterAnchor>
-    </Box>
-    <Nav direction="row">
-      {(user) ? (
-        <Text size="small">{user.displayName}</Text>
       ) : (
           <Anchor icon={<User />} href="/login" hoverIndicator />
         )
       }
-    </Nav>
+    </Box>
 
   </Header>
 )
 
-const AppSidebar = ({ user, onCloseButtonClick, onLogout, ...props }) => (
-  <Sidebar width="medium" background="brand" pad="xsmall"
-    footer=
-    {<Box align="start" pad="xsmall">
-      <Button icon={<User size="medium" color="light-1" />}
-        label="Log out"
-        onClick={onLogout}
-        pad="xsmall"
-        plain />
-    </Box>}
-    {...props}
-  >
-    <Header>
-      <Button icon={<Chat size="medium" color="light-1" />}
-        onClick={onCloseButtonClick}
-        pad="xsmall" />
+const AppSidebar = ({ user, onCloseButtonClick, onLogout, ...props }) => {
+  let history = useHistory();
+  return (
+    <Sidebar width="medium" background="brand" pad="xsmall"
+      footer=
+      {user && <Box pad="xsmall" gap="small" align="end">
+        <Text>{user.displayName}</Text>
+        <Text size="small">{user.email}</Text>
 
-      <Button icon={<FormClose size="medium" color="light-1" />}
-        onClick={onCloseButtonClick}
-        pad="xsmall" />
-    </Header>
-    <Box>
-      <List primaryKey="label"
-        data={[
-          { label: "Mes votes" },
-          { label: "Nouveau vote" },
-          { label: "Rejoindre un vote" },
-          { label: "Mes listes" }
-        ]}></List>
-    </Box>
-  </Sidebar>
-)
+        <Button icon={<User color="light-1" />}
+          label="Log out"
+          onClick={onLogout}
+          pad="small"
+          hoverIndicator
+          reverse
+          secondary
+          plain />
+      </Box>}
+      {...props}
+    >
+      <Header justify="end">
+        <Button icon={<FormClose color="light-1" />}
+          onClick={onCloseButtonClick}
+          pad="xsmall" />
+      </Header>
+      <Box>
+        <List primaryKey="label"
+          data={[
+            { label: "Mes votes", path: "/dashboard" },
+            { label: "Nouveau vote", path: "/newpick" },
+            { label: "Rejoindre un vote" },
+            { label: "Mes listes" }
+          ]}
+          onClickItem={(event) => { history.push(event.item.path) }}></List>
+      </Box>
+    </Sidebar>
+  )
+}
 
 const initialState = {
   authenticated: false,
@@ -122,27 +123,34 @@ const initialState = {
   showSidebar: false
 };
 
-const AppRoutes = ({ authenticated, user }) => {
-  return (authenticated) ? (
+const AppRoutes = ({ user }) => {
+  return (user) ? (
     <Box flex>
-      <Route exact path="/login"> <Redirect to="/dashboard" /></Route>
-      <Route exact path="/register"><Redirect to="/dashboard" /></Route>
-      <Route exact path="/dashboard">
-        <Dashboard user={user} />
-      </Route>
-      <Route exact path="/newpick">
-        <NewPick user={user} />
-      </Route>
-      <Route exact path="/pick/:id">
-        <OpenPick user={user} />
-      </Route>
-      <Route exact path="/"><Home /></Route>
+      <Switch>
+        <Route exact path="/login"> <Redirect to="/dashboard" /></Route>
+        <Route exact path="/register"><Redirect to="/dashboard" /></Route>
+        <Route exact path="/dashboard">
+          <Dashboard user={user} />
+        </Route>
+        <Route exact path="/newpick">
+          <NewPick user={user} />
+        </Route>
+        <Route exact path="/pick/:id">
+          <OpenPick user={user} />
+        </Route>
+        <Route exact path="/"><Home user={user} /></Route>
+      </Switch>
     </Box>
   ) : (
       <Box flex align='center' justify='center'>
-        <Route exact path="/login"> <Login /></Route>
-        <Route exact path="/register"><Register /></Route>
-        <Route exact path="/"><Home /></Route>
+        <Switch>
+          <Route exact path="/login"> <Login /></Route>
+          <Route exact path="/register"><Register /></Route>
+          <Route exact path="/"><Home user={user} /></Route>
+          <Route path="/">
+            <Redirect to="/login" />
+          </Route>
+        </Switch>
       </Box>
     )
 }
@@ -151,21 +159,19 @@ class App extends Component {
 
   state = initialState;
 
+
   setApplicationUser = async (loggedInUser) => {
     const idToken = await loggedInUser.getIdToken();
-    //const userPreferences = await this.state.fbDB.collection('users').doc(`${loggedInUser.uid}`).get();
     await this.setState({
       authenticated: true,
       user: {
-        displayName: loggedInUser.displayName ? loggedInUser.displayName : loggedInUser.email,
+        displayName: loggedInUser.displayName,
         email: loggedInUser.email,
         id: loggedInUser.uid,
         idToken: idToken
       },
-      //response: (userPreferences.exists ? userPreferences.data() : null),
       loading: false
     });
-    //await this.getStorage();
   }
 
   handleAuthLogin = (user) => {
@@ -202,24 +208,12 @@ class App extends Component {
   }
 
   render() {
-    const { authenticated, user } = this.state;
+    const { user } = this.state;
     return (
       <Grommet theme={theme} full>
         <ResponsiveContext.Consumer>
           {size => (
-            <Main direction="row" flex overflow={{ horizontal: 'hidden' }}>
-              {(!this.state.showSidebar || size !== 'small') ? (
-                <Collapsible direction="horizontal" open={this.state.showSidebar}>
-                  <AppSidebar onCloseButtonClick={() => this.setState({ showSidebar: false })}
-                    onLogout={this.signOut} />
-                </Collapsible>
-              ) : (
-                  <Layer>
-                    <AppSidebar onCloseButtonClick={() => this.setState({ showSidebar: false })}
-                      onLogout={this.signOut}
-                      fill />
-                  </Layer>
-                )}
+            <Main direction="row" overflow={{ horizontal: 'hidden' }}>
               <Box fill="horizontal">
                 <AppHeader
                   hasOpenButton={!this.state.showSidebar}
@@ -231,9 +225,27 @@ class App extends Component {
                   autoDismissTimeout={6000}
                   components={{ Toast: NotificationToast }}
                   placement="bottom-center">
-                  <AppRoutes user={user} authenticated={authenticated} />
+                  <AppRoutes user={user} />
                 </ToastProvider>
               </Box>
+
+              {(!this.state.showSidebar || size !== 'small') ? (
+                <Collapsible direction="horizontal" open={this.state.showSidebar}>
+                  <AppSidebar
+                    user={user}
+                    onCloseButtonClick={() => this.setState({ showSidebar: false })}
+                    onLogout={this.signOut} />
+                </Collapsible>
+              ) : (
+                  <Layer>
+                    <AppSidebar
+                      user={user}
+                      onCloseButtonClick={() => this.setState({ showSidebar: false })}
+                      onLogout={this.signOut}
+                      fill />
+                  </Layer>
+                )}
+
             </Main>
           )}
         </ResponsiveContext.Consumer>

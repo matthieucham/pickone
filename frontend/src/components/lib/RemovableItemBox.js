@@ -1,6 +1,6 @@
-import React, { Component } from 'react';
+import React from 'react';
 import {
-    Box, Button, Heading, Layer, Text
+    Box, Button, Text
 } from 'grommet';
 import { Trash } from 'grommet-icons';
 

@@ -1,9 +1,12 @@
 import React, { useState, Component } from 'react';
 import { Box, Button, Form, FormField, Header, Heading, Layer, Text, TextInput } from 'grommet';
 import { Chat, CircleInformation, FormClose } from "grommet-icons";
+import { withRouter } from 'react-router-dom';
 
 import { RouterAnchor } from "../ext/RoutedControls";
 import LoadingLayer from "../lib/LoadingLayer";
+import { withFirebaseService, withAPIService } from '../../hoc';
+
 
 
 
@@ -20,37 +23,49 @@ class EnterCodeLayer extends Component {
             loading: true,
         });
 
-        const user = this.props.user;
-        // try {
-        //     const response = await this.props.APIService.callAPIWithAuth(
-        //         `picks/${this.state.pickId}/vote`,
-        //         user.idToken,
-        //         {
-        //             method: 'PUT',
-        //             body: JSON.stringify({ picked: values }),
-        //             headers: {
-        //                 'content-type': 'application/json'
-        //             }
-        //         }
-        //     ).then(response => response.json());
-        //     if ("error" in response) {
-        //         this.setState({ loading: false, isError: true, errorMessage: response.error });
-        //         this.props.addToast("Erreur lors de l'enregistrement du vote", { appearance: "error" })
-        //     } else {
-        //         this.setState({
-        //             loading: false,
-        //             isError: false,
-        //         });
-        //         this.props.addToast("Vote enregistré", { appearance: "success" })
-        //     }
-        // } catch (e) {
-        //     this.setState({ loading: false, isError: true, errorMessage: e.message });
-        //     this.props.addToast("Erreur lors de l'enregistrement du vote", { appearance: "error" })
-        // }
+        let user = this.props.user;
+        if (!user) {
+            // Anonymous login
+            try {
+                const result = await this.props.FirebaseService.getAuth().signInAnonymously();
+                await result.user.updateProfile({ displayName: value.name });
+                user = result.user;
+            } catch (error) {
+                await this.setState({
+                    error: error.message,
+                    loading: false
+                });
+                return;
+            }
+        }
+
+        try {
+            const response = await this.props.APIService.callAPIWithAuth(
+                `picks/registrations/`,
+                user.idToken,
+                {
+                    method: 'POST',
+                    body: JSON.stringify({ code: value.code }),
+                    headers: {
+                        'content-type': 'application/json'
+                    }
+                }
+            ).then(response => response.json());
+            if ("error" in response) {
+                this.setState({ loading: false, error: response.error });
+            } else {
+                this.setState({
+                    loading: false,
+                });
+                this.props.history.push(`/pick/${response.pickId}`);
+            }
+        } catch (e) {
+            this.setState({ loading: false, error: e.message });
+        }
     }
 
     render() {
-        const { onClose } = this.props;
+        const { user, onClose } = this.props;
         const { loading, error } = this.state;
         return (
             <Layer position="center" onClickOutside={onClose} onEsc={onClose} responsive>
@@ -67,6 +82,13 @@ class EnterCodeLayer extends Component {
                         <FormField name="code" required>
                             <TextInput name="code" type="text" placeholder="Code de partage" />
                         </FormField>
+                        {
+                            !user &&
+                            <FormField name="name" required>
+                                <TextInput name="name" type="text" placeholder="Pseudo" />
+                            </FormField>
+                        }
+
                         {
                             error &&
                             <Box align="center" pad={{ horizontal: "xsmall", vertical: "small" }}>
@@ -94,7 +116,6 @@ class EnterCodeLayer extends Component {
                         >
                             <Button
                                 label="Envoyer le code"
-                                onClick={() => { }}
                                 primary
                                 type="submit"
                             />
@@ -109,7 +130,9 @@ class EnterCodeLayer extends Component {
     }
 }
 
-const Home = ({ user }) => {
+const FbEnterCodeLayer = withAPIService(withRouter(withFirebaseService(EnterCodeLayer)));
+
+const Home = ({ user, onUserProfileUpdated }) => {
     const [openCodeDialog, setOpenCodeDialog] = useState(false);
     return (
         <Box fill align="center" gap="medium">
@@ -143,11 +166,11 @@ const Home = ({ user }) => {
                     duration: 2000
                 }}>
                 <Text>Quel resto ?</Text>
-                <Text>Quel film ?</Text>
                 <Text>Quel prénom pour le bébé ?</Text>
-                <Text>Quel aventurier doit sortir ?</Text>
+                <Text>Claude, Teheiura ou Tirié ?</Text>
+                <Text>Il bluffe ou il bluffe pas ?</Text>
                 <Text>...</Text>
-                <Heading level="2">Ce site met tout le monde d'accord</Heading>
+                <Heading level="2">Cette appli va mettre tout le monde d'accord</Heading>
                 <Text textAlign="end" weight="bold">en décidant à votre place.</Text>
             </Box>
 
@@ -156,7 +179,9 @@ const Home = ({ user }) => {
             </Box>
             {
                 openCodeDialog &&
-                <EnterCodeLayer user={user} onClose={() => setOpenCodeDialog(false)} />
+                <FbEnterCodeLayer user={user}
+                    onClose={() => setOpenCodeDialog(false)}
+                    onUserProfileUpdated={onUserProfileUpdated} />
             }
         </Box>
     )

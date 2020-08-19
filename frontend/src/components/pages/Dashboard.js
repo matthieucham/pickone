@@ -1,12 +1,10 @@
 import React, { Component } from 'react';
-import PropTypes from 'prop-types';
 import {
     Box, Button, Grid, Text, Heading
 } from 'grommet';
 import { Add, More } from 'grommet-icons';
 
 import { withFirebaseService } from '../../hoc';
-import { RouterButton } from '../ext/RoutedControls';
 import { useHistory } from 'react-router-dom';
 
 

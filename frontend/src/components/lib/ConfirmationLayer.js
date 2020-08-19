@@ -1,8 +1,7 @@
-import React, { Component } from 'react';
+import React from 'react';
 import {
     Box, Button, Heading, Layer, Text
 } from 'grommet';
-import { Trash } from 'grommet-icons';
 
 const ConfirmationLayer = ({ title, text, actionLabel, cancelLabel, onConfirmAction, onCancelAction }) => (
     <Layer position="center" onClickOutside={onCancelAction} onEsc={onCancelAction}>

@@ -1,17 +1,3 @@
-const dayjs = require('dayjs')
-const randomstring = require('randomstring')
-
-class ValidationError extends Error {
-    constructor(fieldName) {
-        super("Bad value for field " + fieldName)
-    }
-}
-
-class PickNotFoundError extends Error {
-    constructor(pickId) {
-        super(`Pick id ${pickId} not found or invalid`);
-    }
-}
 
 const create = async ({ admin }, request, response) => {
     const db = admin.firestore();
@@ -125,6 +111,7 @@ const vote = async ({ admin }, request, response) => {
     const formatDoc = (user, data) => {
         return {
             name: user.displayName ? user.displayName : user.email,
+            email: user.email,
             date: dayjs().format(),
             choices: [...data.picked]
         }
@@ -149,17 +136,16 @@ const vote = async ({ admin }, request, response) => {
     const result = {
         registered: false,
     }
-    const userInfo = await admin.auth().getUser(request.user.uid);
     var batch = db.batch();
     var voteRef = db.collection(`picks/${request.params.pickId}/votes`).doc(request.user.uid);
     batch.set(
-        voteRef, formatDoc(userInfo, request.body)
+        voteRef, formatDoc(request.user, request.body)
     );
     var pickRef = db.collection('picks').doc(request.params.pickId);
     batch.update(pickRef, {
         voters: admin.firestore.FieldValue.arrayUnion({
             id: request.user.uid,
-            name: userInfo.displayName ? userInfo.displayName : userInfo.email
+            name: request.user.displayName ? request.user.displayName : request.user.email
         })
     });
     batch.commit().then(() => {
@@ -330,64 +316,10 @@ const resolve = async ({ admin }, request, response) => {
     }
 }
 
-const createRegistration = async ({ admin }, request, response) => {
-    const db = admin.firestore();
-
-    if (!request.body) {
-        return response.status(400).send({
-            error: 'No data in body'
-        });
-    }
-
-    const validate = (data) => {
-        if (!data.code) {
-            throw new ValidationError('code')
-        }
-    }
-
-    try {
-        validate(request.body);
-    } catch (e) {
-        return response.status(400).send({
-            error: e.message
-        });
-    }
-
-    try {
-        const result = {
-            created: false,
-            pickId: null
-        }
-        const snapshot = await db.collection('picks').where('key', '==', request.body.code).get();
-        if (snapshot.empty) {
-            return response.status(404).send({
-                error: "Ce code est inconnu"
-            });
-        }
-        snapshot.forEach(doc => {
-            db.collection('registrations').add(
-                {
-                    pickId: doc.id,
-                    userId: request.user.uid
-                }
-            );
-            // On peut s'arrêter dès le premier résultat trouvé (clés uniques)
-            result.created = true;
-            result.pickId = doc.id;
-            return response.send(result);
-        });
-    } catch (e) {
-        return response.status(500).send({
-            error: e.message
-        });
-    }
-}
-
 module.exports = {
     create,
     vote,
     cancelVote,
     cancel,
-    resolve,
-    createRegistration
+    resolve
 }

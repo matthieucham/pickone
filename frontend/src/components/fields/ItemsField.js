@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import {
     Box, Button, Keyboard, TextInput
 } from 'grommet';
-import { FormClose, FormAdd } from 'grommet-icons';
+import { FormAdd } from 'grommet-icons';
 
 import RemovableItemBox from "../lib/RemovableItemBox";
 
