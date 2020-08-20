@@ -13,12 +13,30 @@ class PickNotFoundError extends Error {
     }
 }
 
+async function makeRegistration(db, userId, pickId, pickData) {
+    await db.collection('registrations').add(
+        {
+            pickId: pickId,
+            userId: userId,
+            pickTitle: pickData.title,
+            pickAuthor: pickData.author,
+            pickDate: pickData.dateCreated
+        }
+    );
+}
+
 const create = async ({ admin }, request, response) => {
     const db = admin.firestore();
 
     if (!request.body) {
         return response.status(400).send({
             error: 'No data in body'
+        });
+    }
+
+    if (request.user.firebase.sign_in_provider == 'anonymous') {
+        return response.status(403).send({
+            error: "Forbidden to anonymous users"
         });
     }
 
@@ -34,14 +52,14 @@ const create = async ({ admin }, request, response) => {
         }
     }
 
-    const formatDoc = (user, data) => {
+    const formatDoc = (user, userInfo, data) => {
         return {
             title: data.title,
             description: "",
             author: {
                 id: user.uid,
-                name: user.displayName ? user.displayName : user.email,
-                email: user.email
+                name: userInfo.displayName ? userInfo.displayName : userInfo.email,
+                email: userInfo.email
             },
             dateCreated: dayjs().format(),
             key: randomstring.generate({
@@ -69,9 +87,12 @@ const create = async ({ admin }, request, response) => {
             created: false,
             pickId: null
         }
-        const dbResponse = await db.collection('picks').add(formatDoc(request.user, pickData));
+        const userInfo = await admin.auth().getUser(request.user.uid);
+        const docData = formatDoc(request.user, userInfo, pickData)
+        const dbResponse = await db.collection('picks').add(docData);
         result.created = true;
         result.pickId = dbResponse.id;
+        makeRegistration(db, request.user.uid, result.pickId, docData);
         return response.send(result);
     } catch (e) {
         return response.status(500).send({
@@ -150,12 +171,12 @@ const vote = async ({ admin }, request, response) => {
         registered: false,
     }
     const userInfo = await admin.auth().getUser(request.user.uid);
-    var batch = db.batch();
-    var voteRef = db.collection(`picks/${request.params.pickId}/votes`).doc(request.user.uid);
+    let batch = db.batch();
+    let voteRef = db.collection(`picks/${request.params.pickId}/votes`).doc(request.user.uid);
     batch.set(
         voteRef, formatDoc(userInfo, request.body)
     );
-    var pickRef = db.collection('picks').doc(request.params.pickId);
+    let pickRef = db.collection('picks').doc(request.params.pickId);
     batch.update(pickRef, {
         voters: admin.firestore.FieldValue.arrayUnion({
             id: request.user.uid,
@@ -190,7 +211,6 @@ const cancelVote = async ({ admin }, request, response) => {
     }
 
     const pickData = await getPickOr404(db, request.params.pickId, true)
-    // TODO : use rule instead of this check:
     if (request.user.uid !== pickData.author.id) {
         return response.status(403).send({
             error: "Forbidden"
@@ -207,10 +227,10 @@ const cancelVote = async ({ admin }, request, response) => {
     const result = {
         deleted: false,
     }
-    var batch = db.batch();
-    var voteRef = db.collection(`picks/${request.params.pickId}/votes`).doc(request.params.voteId);
+    let batch = db.batch();
+    let voteRef = db.collection(`picks/${request.params.pickId}/votes`).doc(request.params.voteId);
     batch.delete(voteRef);
-    var pickRef = db.collection('picks').doc(request.params.pickId);
+    let pickRef = db.collection('picks').doc(request.params.pickId);
     batch.update(pickRef, {
         voters: admin.firestore.FieldValue.arrayRemove({
             id: request.params.voteId,
@@ -232,7 +252,6 @@ const cancelVote = async ({ admin }, request, response) => {
 const cancel = async ({ admin }, request, response) => {
     const db = admin.firestore();
     const pickData = await getPickOr404(db, request.params.pickId, true)
-    // TODO : use rule instead of this check:
     if (request.user.uid !== pickData.author.id) {
         return response.status(403).send({
             error: "Forbidden"
@@ -242,10 +261,30 @@ const cancel = async ({ admin }, request, response) => {
         const result = {
             cancelled: false,
         }
-        var pickRef = db.collection(`picks`).doc(request.params.pickId);
-        await pickRef.update({ cancelled: true });
-        result.cancelled = true;
-        return response.send(result);
+        let batch = db.batch();
+        let pickRef = db.collection(`picks`).doc(request.params.pickId);
+        batch.update(pickRef, { cancelled: true });
+        db.collection(`registrations`).where("pickId", "==", request.params.pickId).get()
+            .then(snapshot => {
+                snapshot.forEach(doc => {
+                    batch.update(doc.ref, { status: "CANCELLED" });
+                });
+                return null;
+            }
+            )
+            .then(() => {
+                return batch.commit();
+            })
+            .then(() => {
+                result.cancelled = true;
+                return response.send(result);
+            }
+            ).catch(error => {
+                console.log(error);
+                return response.status(500).send({
+                    error: error.message
+                });
+            });
     } catch (e) {
         return response.status(500).send({
             error: e.message
@@ -255,7 +294,7 @@ const cancel = async ({ admin }, request, response) => {
 
 function rand(items) {
     // "|" for a kinda "int div"
-    var item = items[Math.floor(Math.random() * items.length)];
+    let item = items[Math.floor(Math.random() * items.length)];
     return item;
 }
 
@@ -313,15 +352,41 @@ const resolve = async ({ admin }, request, response) => {
         const result = {
             resolved: false,
         }
-        var pickRef = db.collection(`picks`).doc(request.params.pickId);
-        await pickRef.update({
-            result: {
-                winner: winner,
-                scores: scores
+
+        let batch = db.batch();
+        let pickRef = db.collection(`picks`).doc(request.params.pickId);
+        batch.update(pickRef,
+            {
+                result: {
+                    winner: winner,
+                    scores: scores
+                }
             }
-        });
-        result.resolved = true;
-        return response.send(result);
+        );
+        db.collection(`registrations`).where("pickId", "==", request.params.pickId).get()
+            .then(snapshot => {
+                snapshot.forEach(doc => {
+                    batch.update(doc.ref, { status: "TERMINATED" });
+                });
+                return null;
+            }
+            )
+            .then(() => {
+                return batch.commit();
+            })
+            .then(() => {
+                result.resolved = true;
+                return response.send(result);
+            }
+            ).catch(error => {
+                console.log(error);
+                return response.status(500).send({
+                    error: error.message
+                });
+            });
+
+
+
     } catch (e) {
         console.log(e.message);
         return response.status(500).send({
@@ -365,12 +430,7 @@ const createRegistration = async ({ admin }, request, response) => {
             });
         }
         snapshot.forEach(doc => {
-            db.collection('registrations').add(
-                {
-                    pickId: doc.id,
-                    userId: request.user.uid
-                }
-            );
+            makeRegistration(db, request.user.uid, doc.id, doc.data());
             // On peut s'arrêter dès le premier résultat trouvé (clés uniques)
             result.created = true;
             result.pickId = doc.id;

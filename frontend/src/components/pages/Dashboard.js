@@ -24,7 +24,7 @@ const NewPick = (props) => {
         </Box>);
 }
 
-const CurrentPick = ({ pickId, title, description, author, limit, isOwner }) => {
+const CurrentPick = ({ pickId, title, description, author, isOwner }) => {
 
     let history = useHistory();
     return (
@@ -52,9 +52,7 @@ const CurrentPick = ({ pickId, title, description, author, limit, isOwner }) => 
                 <Box gridArea="title" pad="xsmall" justify="center" align="center" fill>
                     <Heading level="4">{title}</Heading>
                 </Box>
-                <Box gridArea="limit" pad="xsmall" wrap fill>
-                    <Text size="small">Vote ouvert jusqu'au {limit}</Text>
-                </Box>
+
                 <Box gridArea="indic" pad="xsmall" fill justify="center" align="center">
                     <Button plain icon={<More />} />
                 </Box>
@@ -64,7 +62,31 @@ const CurrentPick = ({ pickId, title, description, author, limit, isOwner }) => 
 
 
 class Dashboard extends Component {
+
+    state = {
+        openPicks: [],
+        terminatedPicks: []
+    }
+
+    componentDidMount() {
+        const user = this.props.user;
+        this.props.FirebaseService.getDb().collection('registrations/')
+            .where('userId', '==', user.id)
+            .orderBy('pickDate', 'desc')
+            .get().then(querySnapshot => {
+                let open = querySnapshot.docs.map(doc => doc.data());
+                this.setState({
+                    openPicks: open.filter(p => !p.status),
+                    terminatedPicks: open.filter(p => p.status === "TERMINATED")
+                });
+                return null;
+            });
+    }
+
     render() {
+        const { openPicks, terminatedPicks } = this.state;
+        const opicks = openPicks.map(op => <CurrentPick key={op.pickId} pickId={op.pickId} title={op.pickTitle} author={op.pickAuthor.name} isOwner={op.pickAuthor.id === this.props.user.id} />);
+        const tpicks = terminatedPicks.map(op => <CurrentPick key={op.pickId} pickId={op.pickId} title={op.pickTitle} author={op.pickAuthor.name} isOwner={op.pickAuthor.id === this.props.user.id} />);
         return (
             <Grid
                 rows={["1/2", "1/2"]}
@@ -77,9 +99,11 @@ class Dashboard extends Component {
                 fill
             >
                 <Box gridArea="current" fill wrap direction="row" alignContent="start" justify="start">
-                    <NewPick /> <CurrentPick pickId="TODO" title="Resto ce midi" description="" author="Fred" limit="02/08 12:00" isOwner={false} />
+                    <NewPick />
+                    {opicks}
                 </Box>
                 <Box gridArea="past" fill wrap direction="row" alignContent="start" justify="start" background='light-4'>
+                    {tpicks}
                 </Box>
             </Grid>)
     }
