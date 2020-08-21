@@ -23,13 +23,15 @@ class EnterCodeLayer extends Component {
             loading: true,
         });
 
-        let user = this.props.user;
-        if (!user) {
+        let userIdToken;
+        if (this.props.user) {
+            userIdToken = this.props.user.idToken;
+        } else {
             // Anonymous login
             try {
                 const result = await this.props.FirebaseService.getAuth().signInAnonymously();
                 await result.user.updateProfile({ displayName: value.name });
-                user = result.user;
+                userIdToken = await result.user.getIdToken();
             } catch (error) {
                 await this.setState({
                     error: error.message,
@@ -37,12 +39,15 @@ class EnterCodeLayer extends Component {
                 });
                 return;
             }
+            if (this.props.onAnonymousLogin) {
+                this.props.onAnonymousLogin(value.name);
+            }
         }
 
         try {
             const response = await this.props.APIService.callAPIWithAuth(
                 `picks/registrations/`,
-                user.idToken,
+                userIdToken,
                 {
                     method: 'POST',
                     body: JSON.stringify({ code: value.code }),
@@ -132,7 +137,7 @@ class EnterCodeLayer extends Component {
 
 const FbEnterCodeLayer = withAPIService(withRouter(withFirebaseService(EnterCodeLayer)));
 
-const Home = ({ user, onUserProfileUpdated }) => {
+const Home = ({ user, onAnonymousLogin }) => {
     const [openCodeDialog, setOpenCodeDialog] = useState(false);
     return (
         <Box fill align="center" gap="medium">
@@ -181,7 +186,7 @@ const Home = ({ user, onUserProfileUpdated }) => {
                 openCodeDialog &&
                 <FbEnterCodeLayer user={user}
                     onClose={() => setOpenCodeDialog(false)}
-                    onUserProfileUpdated={onUserProfileUpdated} />
+                    onAnonymousLogin={onAnonymousLogin} />
             }
         </Box>
     )

@@ -16,7 +16,7 @@ import {
   Sidebar,
   Text
 } from 'grommet';
-import { Chat, FormClose, Menu, User } from 'grommet-icons';
+import { Chat, CircleInformation, FormClose, Menu, User } from 'grommet-icons';
 
 /* Load local files */
 import { withAPIService, withFirebaseService } from './hoc';
@@ -62,15 +62,10 @@ const AppHeader = ({ hasOpenButton, onOpenButtonClick, user, ...props }) => (
       <Anchor href="/" color="brand" icon={<Chat />} label="On vote ?" />
     </Box>
     <Box align="center">
-      {(user) ? (
-        hasOpenButton &&
+      {hasOpenButton &&
         <Button icon={<Menu color="brand" />}
           onClick={onOpenButtonClick}
-          pad="xsmall" />
-      ) : (
-          <Anchor icon={<User />} href="/login" hoverIndicator />
-        )
-      }
+          pad="xsmall" />}
     </Box>
 
   </Header>
@@ -78,22 +73,23 @@ const AppHeader = ({ hasOpenButton, onOpenButtonClick, user, ...props }) => (
 
 const AppSidebar = ({ user, onCloseButtonClick, onLogout, ...props }) => {
   let history = useHistory();
+  const isLoggedIn = user && !user.anonymous;
+  const menuLinks = [
+    { label: "Accueil", path: "/" },
+    { label: "Rejoindre un vote" }
+  ];
+  if (user) {
+    menuLinks.push({ label: "Mes votes", path: "/dashboard" });
+  }
+  if (isLoggedIn) {
+    menuLinks.push({ label: "Nouveau vote", path: "/newpick" }, { label: "Mes listes" });
+  }
   return (
     <Sidebar width="medium" background="brand" pad="xsmall"
       footer=
-      {user && <Box pad="xsmall" gap="small" align="end">
-        <Text>{user.displayName}</Text>
-        <Text size="small">{user.email}</Text>
-
-        <Button icon={<User color="light-1" />}
-          label="Log out"
-          onClick={onLogout}
-          pad="small"
-          hoverIndicator
-          reverse
-          secondary
-          plain />
-      </Box>}
+      {
+        <Text textAlign="end">MG 2020</Text>
+      }
       {...props}
     >
       <Header justify="end">
@@ -103,13 +99,60 @@ const AppSidebar = ({ user, onCloseButtonClick, onLogout, ...props }) => {
       </Header>
       <Box>
         <List primaryKey="label"
-          data={[
-            { label: "Mes votes", path: "/dashboard" },
-            { label: "Nouveau vote", path: "/newpick" },
-            { label: "Rejoindre un vote" },
-            { label: "Mes listes" }
-          ]}
-          onClickItem={(event) => { history.push(event.item.path) }}></List>
+          data={menuLinks}
+          onClickItem={(event) => { history.push(event.item.path) }} />
+        <Box margin={{ vertical: "large", horizontal: "none" }}>
+          {
+            isLoggedIn ? (
+              <List
+                data={[
+                  { label: "Déconnexion" },
+                ]}
+                primaryKey={item => (
+                  <Text weight="bold" color="accent-1">
+                    {item.label}
+                  </Text>
+                )}
+                onClickItem={onLogout}
+              />
+            ) : (
+                <Box>
+                  <List
+                    data={[
+                      { label: "Se connecter", path: "/login" },
+                    ]}
+                    primaryKey={item => (
+                      <Text weight="bold" color="accent-1">
+                        {item.label}
+                      </Text>
+                    )}
+                    onClickItem={(event) => { history.push(event.item.path) }}
+                  />
+                  <Box direction="row" align="center" justify="center">
+                    <Box pad="xsmall">
+                      <CircleInformation />
+                    </Box>
+                    <Box pad="xsmall" flex>
+                      <Text size="small">En étant connecté vous pourrez organiser des votes</Text>
+                    </Box>
+                  </Box>
+                </Box>
+              )
+          }
+          {user &&
+            <Box direction="row" align="center" justify="center">
+              <Box pad="xsmall">
+                <User />
+              </Box>
+              <Box direction="row" pad="xsmall" flex align="center" gap="xsmall">
+                <Text weight="bold">{user.displayName}</Text>
+                {
+                  user.anonymous &&
+                  <Button plain icon={<FormClose />} label="(invité)" onClick={onLogout} hoverIndicator pad="xsmall" reverse />
+                }
+              </Box>
+            </Box>}
+        </Box>
       </Box>
     </Sidebar>
   )
@@ -123,7 +166,7 @@ const initialState = {
   showSidebar: false
 };
 
-const AppRoutes = ({ user }) => {
+const AppRoutes = ({ user, onAnonymousLogin }) => {
   return (user) ? (
     <Box flex>
       <Switch>
@@ -138,7 +181,7 @@ const AppRoutes = ({ user }) => {
         <Route exact path="/pick/:id">
           <OpenPick user={user} />
         </Route>
-        <Route exact path="/"><Home user={user} /></Route>
+        <Route exact path="/"><Home user={user} onAnonymousLogin={onAnonymousLogin} /></Route>
       </Switch>
     </Box>
   ) : (
@@ -146,7 +189,7 @@ const AppRoutes = ({ user }) => {
         <Switch>
           <Route exact path="/login"> <Login /></Route>
           <Route exact path="/register"><Register /></Route>
-          <Route exact path="/"><Home user={user} /></Route>
+          <Route exact path="/"><Home user={user} onAnonymousLogin={onAnonymousLogin} /></Route>
           <Route path="/">
             <Redirect to="/login" />
           </Route>
@@ -165,6 +208,7 @@ class App extends Component {
     await this.setState({
       authenticated: true,
       user: {
+        anonymous: loggedInUser.isAnonymous,
         displayName: loggedInUser.displayName,
         email: loggedInUser.email,
         id: loggedInUser.uid,
@@ -225,7 +269,11 @@ class App extends Component {
                   autoDismissTimeout={6000}
                   components={{ Toast: NotificationToast }}
                   placement="bottom-center">
-                  <AppRoutes user={user} />
+                  <AppRoutes user={user} onAnonymousLogin={(displayName) => {
+                    let user = { ...this.state.user }
+                    user.displayName = displayName;
+                    this.setState({ user })
+                  }} />
                 </ToastProvider>
               </Box>
 
