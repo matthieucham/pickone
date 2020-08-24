@@ -1,71 +1,17 @@
 import React, { Component } from 'react';
+import dayjs from 'dayjs';
 import {
-    Box, Button, Grid, Text, Heading
+    Box, Button, Card, CardHeader, CardBody, CardFooter, Text
 } from 'grommet';
-import { Add, More } from 'grommet-icons';
+import { StatusDisabled, StatusInfo, StatusUnknown, User } from 'grommet-icons';
 
 import { withFirebaseService } from '../../hoc';
-import { useHistory } from 'react-router-dom';
-
-
-const NewPick = (props) => {
-    let history = useHistory();
-    return (
-        <Box pad="small"
-            border
-            hoverIndicator
-            round="small"
-            margin="small"
-            justify="center"
-            align="center"
-            height="xsmall"
-            onClick={() => { history.push(`/newpick`) }}>
-            <Button plain icon={<Add />} label="Nouveau" />
-        </Box>);
-}
-
-const CurrentPick = ({ pickId, title, description, author, isOwner }) => {
-
-    let history = useHistory();
-    return (
-        <Box margin="small" justify="center" align="center"
-            border
-            hoverIndicator
-            round="small"
-            onClick={() => { history.push(`/pick/${pickId}`) }}
-            height="xsmall"
-        >
-            <Grid rows={["xxxsmall", "auto", "xxxsmall"]}
-                columns={["auto", "auto"]}
-                gap="none"
-                areas={[
-                    { name: 'header', start: [0, 0], end: [0, 0] },
-                    { name: 'title', start: [0, 1], end: [0, 1] },
-                    { name: 'limit', start: [0, 2], end: [0, 2] },
-                    { name: 'indic', start: [1, 0], end: [1, 2] },
-                ]}
-                fill
-            >
-                <Box gridArea="header" pad="xsmall" fill>
-                    <Text size="small">Proposé par {author}</Text>
-                </Box>
-                <Box gridArea="title" pad="xsmall" justify="center" align="center" fill>
-                    <Heading level="4">{title}</Heading>
-                </Box>
-
-                <Box gridArea="indic" pad="xsmall" fill justify="center" align="center">
-                    <Button plain icon={<More />} />
-                </Box>
-            </Grid>
-        </Box>)
-}
-
+import { withRouter } from 'react-router-dom';
 
 class Dashboard extends Component {
 
     state = {
-        openPicks: [],
-        terminatedPicks: []
+        picks: [],
     }
 
     componentDidMount() {
@@ -73,41 +19,102 @@ class Dashboard extends Component {
         this.props.FirebaseService.getDb().collection('registrations/')
             .where('userId', '==', user.id)
             .orderBy('pickDate', 'desc')
-            .get().then(querySnapshot => {
+            .onSnapshot(querySnapshot => {
                 let open = querySnapshot.docs.map(doc => doc.data());
                 this.setState({
                     openPicks: open.filter(p => !p.status),
-                    terminatedPicks: open.filter(p => p.status === "TERMINATED")
+                    terminatedPicks: open.filter(p => p.status === "TERMINATED"),
+                    picks: open
                 });
                 return null;
             });
     }
 
     render() {
-        const { openPicks, terminatedPicks } = this.state;
-        const opicks = openPicks.map(op => <CurrentPick key={op.pickId} pickId={op.pickId} title={op.pickTitle} author={op.pickAuthor.name} isOwner={op.pickAuthor.id === this.props.user.id} />);
-        const tpicks = terminatedPicks.map(op => <CurrentPick key={op.pickId} pickId={op.pickId} title={op.pickTitle} author={op.pickAuthor.name} isOwner={op.pickAuthor.id === this.props.user.id} />);
+        const { picks } = this.state;
+        const { user } = this.props;
         return (
-            <Grid
-                rows={["1/2", "1/2"]}
-                columns={["full"]}
-                gap="medium"
-                areas={[
-                    { name: 'current', start: [0, 0], end: [0, 0] },
-                    { name: 'past', start: [0, 1], end: [0, 1] },
-                ]}
-                fill
-            >
-                <Box gridArea="current" fill wrap direction="row" alignContent="start" justify="start">
-                    <NewPick />
-                    {opicks}
-                </Box>
-                <Box gridArea="past" fill wrap direction="row" alignContent="start" justify="start" background='light-4'>
-                    {tpicks}
-                </Box>
-            </Grid>)
+            <Box direction="row-responsive" gap="medium" align="center" justify="start">
+                {
+                    picks.map(
+                        ({ pickId, pickTitle, status, pickDate, pickAuthor }) => (
+                            <Card key={pickId} height="small" width="medium" background="light-1" margin="xsmall"
+                                onClick={() => { this.props.history.push(`/pick/${pickId}`) }}>
+                                <CardHeader pad="small">
+                                    <Text size="small">{dayjs(pickDate).format('DD/MM/YYYY')}</Text>
+                                    {(status === "TERMINATED") ? (
+                                        <StatusInfo color="brand" />
+                                    )
+                                        : (
+                                            (status === "CANCELLED") ? (
+                                                <StatusDisabled color="status-warning" />
+                                            ) : (
+                                                    <StatusUnknown color="status-ok" />
+                                                )
+                                        )
+                                    }
+                                </CardHeader>
+                                <CardBody pad="small" align="center" justify="center">
+                                    <Text weight="bold">{pickTitle}</Text>
+                                </CardBody>
+                                <CardFooter pad="small" background="light-2">
+                                    <Button
+                                        icon={<User />}
+                                        label={
+                                            <Text size="small" weight={pickAuthor.id === user.id ? "bold" : "normal"}>
+                                                {pickAuthor.name}</Text>
+                                        }
+                                        plain />
+                                    {(status === "TERMINATED") ? (
+                                        <Box background="brand"
+                                            round="xsmall"
+                                            pad="xsmall">
+                                            <Text size="small" weight="bold">Terminé</Text>
+                                        </Box>
+                                    )
+                                        : (
+                                            (status === "CANCELLED") ? (
+                                                <Box background="status-warning"
+                                                    round="xsmall"
+                                                    pad="xsmall">
+                                                    <Text size="small" weight="bold">Annulé</Text>
+                                                </Box>
+                                            ) : (
+                                                    <Box background="status-ok"
+                                                        round="xsmall"
+                                                        pad="xsmall">
+                                                        <Text size="small" weight="bold">En cours</Text>
+                                                    </Box>
+                                                )
+                                        )
+                                    }
+                                </CardFooter>
+                            </Card>
+                        )
+                    )
+                }
+            </Box>
+            // <Grid
+            //     rows={["1/2", "1/2"]}
+            //     columns={["full"]}
+            //     gap="medium"
+            //     areas={[
+            //         { name: 'current', start: [0, 0], end: [0, 0] },
+            //         { name: 'past', start: [0, 1], end: [0, 1] },
+            //     ]}
+            //     fill
+            // >
+            //     <Box gridArea="current" fill wrap direction="row" alignContent="start" justify="start">
+            //         <NewPick />
+            //         {opicks}
+            //     </Box>
+            //     <Box gridArea="past" fill wrap direction="row" alignContent="start" justify="start" background='light-4'>
+            //         {tpicks}
+            //     </Box>
+            // </Grid>
+        )
     }
 }
 
-const WrappedComponent = withFirebaseService(Dashboard);
+const WrappedComponent = withFirebaseService(withRouter(Dashboard));
 export default WrappedComponent;

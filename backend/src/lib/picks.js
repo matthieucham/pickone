@@ -14,14 +14,21 @@ class PickNotFoundError extends Error {
 }
 
 async function makeRegistration(db, userId, pickId, pickData) {
+    const doc = {
+        pickId: pickId,
+        userId: userId,
+        pickTitle: pickData.title,
+        pickAuthor: pickData.author,
+        pickDate: pickData.dateCreated
+    };
+    if (pickData.result) {
+        doc.status = "TERMINATED";
+    }
+    if (pickData.cancelled) {
+        doc.status = "CANCELLED";
+    }
     await db.collection('registrations').add(
-        {
-            pickId: pickId,
-            userId: userId,
-            pickTitle: pickData.title,
-            pickAuthor: pickData.author,
-            pickDate: pickData.dateCreated
-        }
+        doc
     );
 }
 

@@ -98,37 +98,37 @@ const AppSidebar = ({ user, onCloseButtonClick, onLogout, ...props }) => {
           pad="xsmall" />
       </Header>
       <Box>
-        <List primaryKey="label"
-          data={menuLinks}
-          onClickItem={(event) => { history.push(event.item.path) }} />
+        <Box>
+          {menuLinks.map((ml) => (
+            <Box border="bottom">
+              <Button hoverIndicator onClick={() => { history.push(ml.path) }}>
+                <Box pad={{ horizontal: "medium", vertical: "small" }} align="start">
+                  <Text weight="bold">{ml.label}</Text>
+                </Box>
+              </Button>
+            </Box>
+          ))}
+        </Box>
         <Box margin={{ vertical: "large", horizontal: "none" }}>
           {
             isLoggedIn ? (
-              <List
-                data={[
-                  { label: "Déconnexion" },
-                ]}
-                primaryKey={item => (
-                  <Text weight="bold" color="accent-1">
-                    {item.label}
-                  </Text>
-                )}
-                onClickItem={onLogout}
-              />
+              <Box border="bottom">
+                <Button hoverIndicator onClick={onLogout}>
+                  <Box pad={{ horizontal: "medium", vertical: "small" }} align="start">
+                    <Text weight="bold" color="accent-1">Déconnexion</Text>
+                  </Box>
+                </Button>
+              </Box>
             ) : (
                 user ? (
                   <Box>
-                    <List
-                      data={[
-                        { label: "Créer un compte", path: "/register" },
-                      ]}
-                      primaryKey={item => (
-                        <Text weight="bold" color="accent-1">
-                          {item.label}
-                        </Text>
-                      )}
-                      onClickItem={(event) => { history.push(event.item.path) }}
-                    />
+                    <Box border="bottom">
+                      <Button hoverIndicator onClick={() => { history.push("/register") }}>
+                        <Box pad={{ horizontal: "medium", vertical: "small" }} align="start">
+                          <Text weight="bold" color="accent-1">Créer un compte</Text>
+                        </Box>
+                      </Button>
+                    </Box>
                     <Box direction="row" align="center" justify="center">
                       <Box pad="xsmall">
                         <CircleInformation />
@@ -139,19 +139,14 @@ const AppSidebar = ({ user, onCloseButtonClick, onLogout, ...props }) => {
                     </Box>
                   </Box>
                 ) : (
-                    <Box>
-                      <List
-                        data={[
-                          { label: "Se connecter", path: "/login" },
-                        ]}
-                        primaryKey={item => (
-                          <Text weight="bold" color="accent-1">
-                            {item.label}
-                          </Text>
-                        )}
-                        onClickItem={(event) => { history.push(event.item.path) }}
-                      />
+                    <Box border="bottom">
+                      <Button hoverIndicator onClick={() => { history.push("/login") }}>
+                        <Box pad={{ horizontal: "medium", vertical: "small" }} align="start">
+                          <Text weight="bold" color="accent-1">Se connecter</Text>
+                        </Box>
+                      </Button>
                     </Box>
+
                   )
               )
           }
