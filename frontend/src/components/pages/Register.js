@@ -2,8 +2,11 @@ import React, { Component } from 'react';
 import {
     Box, Button, Form, FormField, Heading, Text, TextInput
 } from 'grommet';
+import firebase from 'firebase/app';
+
 
 import { withFirebaseService } from '../../hoc';
+import LoadingLayer from "../lib/LoadingLayer";
 import SocialNetworks from '../login/SocialNetworks';
 
 
@@ -12,7 +15,8 @@ class Register extends Component {
     state = {
         isError: false,
         errorMessage: '',
-        loading: false
+        loading: false,
+        username: this.props.user ? this.props.user.displayName : "",
     }
 
     validate = (value) => {
@@ -27,7 +31,7 @@ class Register extends Component {
         return true;
     }
 
-    handleSubmit = async ({ value, touched }) => {
+    handleSubmit = async ({ value }) => {
 
         await this.setState({
             isError: false,
@@ -35,30 +39,43 @@ class Register extends Component {
             loading: true
         });
         if (this.validate(value)) {
-            this.props.FirebaseService.getAuth().createUserWithEmailAndPassword(value.email, value.password)
-                .then(result => result.user.updateProfile({ displayName: value.display }))
-                .then(data => {
-                    this.setState({
-                        loading: false,
-                        errorMessage: '',
-                        isError: false
-                    });
-                })
-                .catch(err => {
-                    this.setState({
-                        errorMessage: err.message,
-                        isError: true,
-                        loading: false
-                    });
+            try {
+                if (!this.props.user) {
+                    const createUserResponse = await this.props.FirebaseService.getAuth().createUserWithEmailAndPassword(value.email, value.password);
+                    await createUserResponse.user.updateProfile({ displayName: value.display });
+                    if (this.props.onDisplayNameChanged) {
+                        this.props.onDisplayNameChanged(value.display, true);
+                    }
+                }
+                else if (this.props.user.anonymous) {
+                    const credential = firebase.auth.EmailAuthProvider.credential(value.email, value.password);
+                    const usercred = await this.props.FirebaseService.getAuth().currentUser.linkWithCredential(credential);
+                    await usercred.user.updateProfile({ displayName: value.display });
+                    if (this.props.onDisplayNameChanged) {
+                        this.props.onDisplayNameChanged(value.display, true);
+                    }
+                }
+            } catch (err) {
+                this.setState({
+                    errorMessage: err.message,
+                    isError: true,
+                    loading: false
                 });
+                return
+            }
         }
+        this.setState({
+            loading: false,
+            errorMessage: '',
+            isError: false
+        });
 
     }
 
     render() {
-        const { isError, errorMessage, loading } = this.state;
+        const { isError, errorMessage, loading, username } = this.state;
         return (
-            <Box>
+            <Box align="center" pad="small">
                 <Heading level="3">Inscription</Heading>
                 <Box align="center" justify="center">
                     <Box width="medium">
@@ -66,7 +83,9 @@ class Register extends Component {
                             onSubmit={this.handleSubmit}
                         >
                             <FormField label="Pseudo" name="display" required>
-                                <TextInput name="display" type="text" />
+                                <TextInput name="display" type="text"
+                                    value={username}
+                                    onChange={event => this.setState({ username: event.target.value })} />
                             </FormField>
 
                             <FormField label="Adresse e-mail" name="email" required>
@@ -97,6 +116,9 @@ class Register extends Component {
                         <SocialNetworks />
                     </Box>
                 </Box>
+                {
+                    loading && <LoadingLayer />
+                }
             </Box>
         )
     }

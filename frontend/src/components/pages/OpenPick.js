@@ -97,7 +97,6 @@ const ResultPanel = ({ winner, scores }) => {
                 pct: (Math.round(score * 100.0 / totalVotes) / 100) * 100
             }
         ));
-    console.log(distrival);
 
     return <Box justify="center" align="center">
         <Box width="medium" align="center">

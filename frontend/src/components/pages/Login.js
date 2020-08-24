@@ -2,9 +2,10 @@ import React, { Component } from 'react';
 import {
     Box, Button, Form, FormField, Heading, Text, TextInput
 } from 'grommet';
-
+//import firebase from 'firebase/app';
 import { withFirebaseService } from '../../hoc';
 import SocialNetworks from '../login/SocialNetworks';
+import LoadingLayer from "../lib/LoadingLayer";
 import { Link } from 'react-router-dom';
 
 
@@ -16,31 +17,42 @@ class Login extends Component {
         loading: false
     }
 
-    handleSubmit = async ({ value, touched }) => {
+    handleSubmit = async ({ value }) => {
 
         await this.setState({
             isError: false,
             errorMessage: '',
             loading: true
         });
-
-        this.props.FirebaseService.getAuth().signInWithEmailAndPassword(value.email, value.password)
-            .then((result) => {
-                console.log(result);
-            }).catch(async (error) => {
-                await this.setState({
-                    errorMessage: error.message,
-                    isError: true,
-                    loading: false
-                });
-            })
+        try {
+            if (!this.props.user) {
+                await this.props.FirebaseService.getAuth().signInWithEmailAndPassword(value.email, value.password);
+                // } else if (this.props.user.anonymous) {
+                //     const credential = firebase.auth.EmailAuthProvider.credential(value.email, value.password);
+                //     const usercred = await this.props.FirebaseService.getAuth().currentUser.linkWithCredential(credential);
+                //     if (this.props.onDisplayNameChanged) {
+                //         this.props.onDisplayNameChanged(usercred.user.displayName, true);
+                //     }
+            }
+            await this.setState({
+                errorMessage: "",
+                isError: false,
+                loading: false
+            });
+        } catch (error) {
+            await this.setState({
+                errorMessage: error.message,
+                isError: true,
+                loading: false
+            });
+        }
 
     }
 
     render() {
         const { isError, errorMessage, loading } = this.state;
         return (
-            <Box>
+            <Box align="center" pad="small">
                 <Heading level="3">Login</Heading>
                 <Box fill align="center" justify="center">
                     <Box width="medium">
@@ -76,6 +88,9 @@ class Login extends Component {
                         <SocialNetworks />
                     </Box>
                 </Box>
+                {
+                    loading && <LoadingLayer />
+                }
             </Box>
         )
     }

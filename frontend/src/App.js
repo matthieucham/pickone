@@ -116,27 +116,43 @@ const AppSidebar = ({ user, onCloseButtonClick, onLogout, ...props }) => {
                 onClickItem={onLogout}
               />
             ) : (
-                <Box>
-                  <List
-                    data={[
-                      { label: "Se connecter", path: "/login" },
-                    ]}
-                    primaryKey={item => (
-                      <Text weight="bold" color="accent-1">
-                        {item.label}
-                      </Text>
-                    )}
-                    onClickItem={(event) => { history.push(event.item.path) }}
-                  />
-                  <Box direction="row" align="center" justify="center">
-                    <Box pad="xsmall">
-                      <CircleInformation />
-                    </Box>
-                    <Box pad="xsmall" flex>
-                      <Text size="small">En étant connecté vous pourrez organiser des votes</Text>
+                user ? (
+                  <Box>
+                    <List
+                      data={[
+                        { label: "Créer un compte", path: "/register" },
+                      ]}
+                      primaryKey={item => (
+                        <Text weight="bold" color="accent-1">
+                          {item.label}
+                        </Text>
+                      )}
+                      onClickItem={(event) => { history.push(event.item.path) }}
+                    />
+                    <Box direction="row" align="center" justify="center">
+                      <Box pad="xsmall">
+                        <CircleInformation />
+                      </Box>
+                      <Box pad="xsmall" flex>
+                        <Text size="small">Avec un compte vous pourrez organiser des votes</Text>
+                      </Box>
                     </Box>
                   </Box>
-                </Box>
+                ) : (
+                    <Box>
+                      <List
+                        data={[
+                          { label: "Se connecter", path: "/login" },
+                        ]}
+                        primaryKey={item => (
+                          <Text weight="bold" color="accent-1">
+                            {item.label}
+                          </Text>
+                        )}
+                        onClickItem={(event) => { history.push(event.item.path) }}
+                      />
+                    </Box>
+                  )
               )
           }
           {user &&
@@ -166,12 +182,15 @@ const initialState = {
   showSidebar: false
 };
 
-const AppRoutes = ({ user, onAnonymousLogin }) => {
+const AppRoutes = ({ user, onDisplayNameChanged }) => {
   return (user) ? (
     <Box flex>
       <Switch>
-        <Route exact path="/login"> <Redirect to="/dashboard" /></Route>
-        <Route exact path="/register"><Redirect to="/dashboard" /></Route>
+        <Route exact path="/login">
+          <Redirect to="/dashboard" />
+        </Route>
+        <Route exact path="/register">
+          {user.anonymous ? <Register user={user} onDisplayNameChanged={onDisplayNameChanged} /> : <Redirect to="/dashboard" />}</Route>
         <Route exact path="/dashboard">
           <Dashboard user={user} />
         </Route>
@@ -181,15 +200,15 @@ const AppRoutes = ({ user, onAnonymousLogin }) => {
         <Route exact path="/pick/:id">
           <OpenPick user={user} />
         </Route>
-        <Route exact path="/"><Home user={user} onAnonymousLogin={onAnonymousLogin} /></Route>
+        <Route exact path="/"><Home user={user} onAnonymousLogin={onDisplayNameChanged} /></Route>
       </Switch>
     </Box>
   ) : (
       <Box flex align='center' justify='center'>
         <Switch>
           <Route exact path="/login"> <Login /></Route>
-          <Route exact path="/register"><Register /></Route>
-          <Route exact path="/"><Home user={user} onAnonymousLogin={onAnonymousLogin} /></Route>
+          <Route exact path="/register"><Register user={user} onDisplayNameChanged={onDisplayNameChanged} /></Route>
+          <Route exact path="/"><Home user={user} onAnonymousLogin={onDisplayNameChanged} /></Route>
           <Route path="/">
             <Redirect to="/login" />
           </Route>
@@ -269,9 +288,10 @@ class App extends Component {
                   autoDismissTimeout={6000}
                   components={{ Toast: NotificationToast }}
                   placement="bottom-center">
-                  <AppRoutes user={user} onAnonymousLogin={(displayName) => {
+                  <AppRoutes user={user} onDisplayNameChanged={(displayName, notanonymous) => {
                     let user = { ...this.state.user }
                     user.displayName = displayName;
+                    user.anonymous = !notanonymous;
                     this.setState({ user })
                   }} />
                 </ToastProvider>

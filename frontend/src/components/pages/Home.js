@@ -1,6 +1,6 @@
 import React, { useState, Component } from 'react';
 import { Box, Button, Form, FormField, Header, Heading, Layer, Text, TextInput } from 'grommet';
-import { Chat, CircleInformation, FormClose } from "grommet-icons";
+import { Chat, CircleInformation, FormClose, User } from "grommet-icons";
 import { withRouter } from 'react-router-dom';
 
 import { RouterAnchor } from "../ext/RoutedControls";
@@ -82,18 +82,22 @@ class EnterCodeLayer extends Component {
                         pad="xsmall" />
                 </Header>
                 <Box pad="medium" gap="small" width="medium" fill>
-                    <Text>Saisissez le code de partage que l'organisateur du vote vous aura communiqué</Text>
+
                     <Form onSubmit={this.onSubmit}>
-                        <FormField name="code" required>
+                        {user ?
+                            (<Button plain icon={<User />}
+                                label={user.displayName + (user.anonymous ? " (invité)" : "")}
+                                margin={{ horizontal: "small", vertical: "none" }}
+                            />
+                            ) : (
+                                <FormField name="name" required label="Pseudo :">
+                                    <TextInput name="name" type="text" placeholder="Pseudo" />
+                                </FormField>
+                            )
+                        }
+                        <FormField name="code" required label="Saisissez le code de partage que l'organisateur du vote vous aura communiqué :">
                             <TextInput name="code" type="text" placeholder="Code de partage" />
                         </FormField>
-                        {
-                            !user &&
-                            <FormField name="name" required>
-                                <TextInput name="name" type="text" placeholder="Pseudo" />
-                            </FormField>
-                        }
-
                         {
                             error &&
                             <Box align="center" pad={{ horizontal: "xsmall", vertical: "small" }}>
