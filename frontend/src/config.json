@@ -5,5 +5,7 @@
     "databaseURL": "https://pickone-2e023.firebaseio.com",
     "projectId": "pickone-2e023",
     "storageBucket": "pickone-2e023.appspot.com",
-    "messagingSenderId": "28900020747"
+    "messagingSenderId": "28900020747",
+    "appId": "1:28900020747:web:353d29adb6671033262d0e",
+    "vapidKey": "BCdggOKCGJfHLlz_Or_KEElxoo_XhPyvGnqxzxG1__qfulfrqx5ffVIR3XIKhyh0q-taxgW9vrBhce2mS47SCiQ"
 }

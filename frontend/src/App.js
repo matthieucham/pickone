@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { withRouter, Redirect, Route, Switch, useHistory } from 'react-router-dom';
-import { ToastProvider } from 'react-toast-notifications'
+import { ToastProvider } from 'react-toast-notifications';
 
 import {
   Anchor,
@@ -10,18 +10,20 @@ import {
   Grommet,
   Header,
   Layer,
-  List,
   Main,
   ResponsiveContext,
   Sidebar,
   Text
 } from 'grommet';
-import { Chat, CircleInformation, FormClose, Menu, User } from 'grommet-icons';
+import { Chat, CircleInformation, FormClose, Menu, Notification, User } from 'grommet-icons';
 
 /* Load local files */
-import { withAPIService, withFirebaseService } from './hoc';
+import { withAPIService, withFirebaseService, withToast } from './hoc';
 
 import NotificationToast from './components/lib/NotificationToast';
+import PushMessageToast from './components/lib/PushMessageToast';
+
+import { RouterAnchor } from "./components/ext/RoutedControls";
 
 import Login from './components/pages/Login';
 import Register from './components/pages/Register';
@@ -43,7 +45,8 @@ const theme = {
   },
 };
 
-const AppHeader = ({ hasOpenButton, onOpenButtonClick, user, ...props }) => (
+
+const AppHeader = ({ hasOpenButton, hasNotif, onOpenButtonClick, user, messaging, ...props }) => (
   <Header
     direction="row"
     fill="horizontal"
@@ -61,7 +64,16 @@ const AppHeader = ({ hasOpenButton, onOpenButtonClick, user, ...props }) => (
     <Box align="center">
       <Anchor href="/" color="brand" icon={<Chat />} label="On vote ?" />
     </Box>
-    <Box align="center">
+    <Box align="center" direction="row">
+      {
+        hasNotif &&
+        <ToastProvider autoDismiss
+          autoDismissTimeout={30000}
+          components={{ Toast: PushMessageToast }}
+          placement="top-right">
+          <DecoratedPushMessageNotifier messaging={messaging} />
+        </ToastProvider>
+      }
       {hasOpenButton &&
         <Button icon={<Menu color="brand" />}
           onClick={onOpenButtonClick}
@@ -70,6 +82,32 @@ const AppHeader = ({ hasOpenButton, onOpenButtonClick, user, ...props }) => (
 
   </Header>
 )
+
+class PushMessageNotifier extends Component {
+  componentDidMount() {
+    this.props.messaging.onMessage((payload) => {
+      if (payload.data.pickStatus === "TERMINATED") {
+        this.props.addToast(
+          <Box>
+            <Text>Vote terminé : {payload.data.pickTitle}</Text>
+            <RouterAnchor path={`/pick/${payload.data.pickId}`} label="Cliquer pour voir le résultat" />
+          </Box>
+          , { appearance: "info" });
+      } else if (payload.data.pickStatus === "CANCELLED") {
+        this.props.addToast(`Vote annulé : ${payload.data.pickTitle}`, { appearance: "warning" });
+      }
+    });
+  }
+
+  render() {
+    return (
+      <Button icon={<Notification color="brand" />}
+        onClick={() => { }}
+        pad="xsmall" />);
+  }
+}
+
+const DecoratedPushMessageNotifier = withToast(withFirebaseService(PushMessageNotifier));
 
 const AppSidebar = ({ user, onCloseButtonClick, onLogout, ...props }) => {
   let history = useHistory();
@@ -100,7 +138,7 @@ const AppSidebar = ({ user, onCloseButtonClick, onLogout, ...props }) => {
       <Box>
         <Box>
           {menuLinks.map((ml) => (
-            <Box border="bottom">
+            <Box border="bottom" key={`menu${ml.label.replace(" ", "_")}`}>
               <Button hoverIndicator onClick={() => { history.push(ml.path) }}>
                 <Box pad={{ horizontal: "medium", vertical: "small" }} align="start">
                   <Text weight="bold">{ml.label}</Text>
@@ -169,14 +207,6 @@ const AppSidebar = ({ user, onCloseButtonClick, onLogout, ...props }) => {
   )
 }
 
-const initialState = {
-  authenticated: false,
-  error: '',
-  user: null,
-  loading: true,
-  showSidebar: false
-};
-
 const AppRoutes = ({ user, onDisplayNameChanged }) => {
   return (user) ? (
     <Box flex>
@@ -212,6 +242,14 @@ const AppRoutes = ({ user, onDisplayNameChanged }) => {
     )
 }
 
+const initialState = {
+  authenticated: false,
+  error: '',
+  user: null,
+  loading: true,
+  showSidebar: false
+};
+
 class App extends Component {
 
   state = initialState;
@@ -232,15 +270,68 @@ class App extends Component {
     });
   }
 
-  handleAuthLogin = (user) => {
+  async sendTokenToServer(user, token) {
+    try {
+      const response = await this.props.APIService.callAPIWithAuth(
+        `picks/pushtokens/`,
+        user.idToken,
+        {
+          method: 'POST',
+          body: token,
+          headers: {
+            'content-type': 'text/plain'
+          }
+        }
+      )
+      return response;
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  setupPushMessaging = () => {
+    const messaging = this.props.FirebaseService.getMessaging();
+    messaging.getToken({ vapidKey: this.props.FirebaseService.getVapidKey() }).then((currentToken) => {
+      if (currentToken) {
+        //sendTokenToServer(currentToken);
+        this.sendTokenToServer(this.state.user, currentToken).then(
+          resp => {
+            this.setState({ pushMessaging: true, messaging: messaging });
+          }
+        )
+        //updateUIForPushEnabled(currentToken);
+        //this.setState({ pushMessaging: true });
+      } else {
+        // Show permission request.
+        console.log('No Instance ID token available. Request permission to generate one.');
+        // Show permission UI.
+        //updateUIForPushPermissionRequired();
+        //setTokenSentToServer(false);
+      }
+    }).catch((err) => {
+      console.log('An error occurred while retrieving token. ', err);
+      //showToken('Error retrieving Instance ID token. ', err);
+      //setTokenSentToServer(false);
+    });
+
+    // messaging.onMessage((payload) => {
+    //   console.log('Message received. ', payload);
+    //   // ...
+    // });
+    // console.log("REGISTERED ONMESSAGE", messaging);
+  }
+
+  handleAuthLogin = async (user) => {
     if (user) {
-      this.setApplicationUser(user);
+      await this.setApplicationUser(user);
+      await this.setupPushMessaging();
     } else {
       this.setState(
         {
           authenticated: false,
           loggedInUser: null,
-          loading: false
+          loading: false,
+          pushMessaging: false
         }
       );
     }
@@ -266,7 +357,7 @@ class App extends Component {
   }
 
   render() {
-    const { user } = this.state;
+    const { user, messaging } = this.state;
     return (
       <Grommet theme={theme} full>
         <ResponsiveContext.Consumer>
@@ -275,8 +366,10 @@ class App extends Component {
               <Box fill="horizontal">
                 <AppHeader
                   hasOpenButton={!this.state.showSidebar}
+                  hasNotif={this.state.pushMessaging}
                   onOpenButtonClick={() => this.setState({ showSidebar: true })}
                   user={user}
+                  messaging={messaging}
                 />
 
                 <ToastProvider autoDismiss

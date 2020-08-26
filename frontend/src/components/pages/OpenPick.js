@@ -115,7 +115,7 @@ const ResultPanel = ({ winner, scores }) => {
                 delay: 0,
                 duration: 5000
             }}>
-            <Distribution values={distrival} fill>
+            <Distribution values={distrival} fill basis="full">
                 {value => (
                     <Box pad="medium" align="center" background={value.color} fill>
                         <Text size="small">{value.label}</Text>

@@ -32,6 +32,56 @@ async function makeRegistration(db, userId, pickId, pickData) {
     );
 }
 
+function notifyVoteFinished(db, messaging, pickId, pickData, iscancelled) {
+    db.collection("registrations").where("pickId", "==", pickId).get()
+        .then(snapshot => {
+            let tokensFetch = snapshot.docs.map(async (doc) => {
+                let pt = await db.collection("pushTokens").doc(doc.data().userId).get();
+                if (pt.exists) {
+                    return pt.data().token;
+                } else {
+                    return null;
+                }
+            });
+            return Promise.all(tokensFetch);
+        })
+        .then(
+            (tokens) => {
+                let message = {
+                    // notification: {
+                    //     title: pickData.title,
+                    //     body: "Voir les résultats"
+                    // },
+                    data: {
+                        pickId: pickId,
+                        pickTitle: pickData.title,
+                        pickStatus: iscancelled ? "CANCELLED" : "TERMINATED"
+                    },
+                    tokens: tokens
+                };
+                // Send a message to the device corresponding to the provided
+                // registration token.
+                return messaging.sendMulticast(message);
+            }
+        ).then((response) => {
+            if (response.failureCount > 0) {
+                //const failedTokens = [];
+                response.responses.forEach((resp, idx) => {
+                    if (!resp.success) {
+                        console.log(resp);
+                        //failedTokens.push(registrationTokens[idx]);
+                    }
+                });
+                //console.log('List of tokens that caused failures: ' + failedTokens);
+            } else {
+                console.log(response);
+            }
+        })
+        .catch((error) => {
+            console.log('Error sending message:', error);
+        });
+}
+
 const create = async ({ admin }, request, response) => {
     const db = admin.firestore();
 
@@ -115,7 +165,7 @@ const getPickOr404 = async (db, pickId, openOnly) => {
         throw new PickNotFoundError(pickId);
     }
 
-    const pickData = await pickDoc.data();
+    const pickData = pickDoc.data();
     if (openOnly) {
         if (pickData.result && pickData.result.length > 0) {
             // Déjà résolu => error
@@ -258,6 +308,7 @@ const cancelVote = async ({ admin }, request, response) => {
 
 const cancel = async ({ admin }, request, response) => {
     const db = admin.firestore();
+    const messaging = admin.messaging();
     const pickData = await getPickOr404(db, request.params.pickId, true)
     if (request.user.uid !== pickData.author.id) {
         return response.status(403).send({
@@ -286,6 +337,8 @@ const cancel = async ({ admin }, request, response) => {
                 result.cancelled = true;
                 return response.send(result);
             }
+            ).then(
+                () => notifyVoteFinished(db, messaging, request.params.pickId, pickData, true)
             ).catch(error => {
                 console.log(error);
                 return response.status(500).send({
@@ -337,6 +390,7 @@ function sortByFrequency(array) {
 
 const resolve = async ({ admin }, request, response) => {
     const db = admin.firestore();
+    const messaging = admin.messaging();
     try {
         const pickData = await getPickOr404(db, request.params.pickId, true)
         // grab all votes:
@@ -384,16 +438,14 @@ const resolve = async ({ admin }, request, response) => {
             .then(() => {
                 result.resolved = true;
                 return response.send(result);
-            }
+            }).then(
+                () => notifyVoteFinished(db, messaging, request.params.pickId, pickData)
             ).catch(error => {
                 console.log(error);
                 return response.status(500).send({
                     error: error.message
                 });
             });
-
-
-
     } catch (e) {
         console.log(e.message);
         return response.status(500).send({
@@ -450,11 +502,37 @@ const createRegistration = async ({ admin }, request, response) => {
     }
 }
 
+const storePushToken = async ({ admin }, request, response) => {
+    const db = admin.firestore();
+    if (!request.body) {
+        return response.status(400).send({
+            error: 'No data in body'
+        });
+    }
+    try {
+        const result = {
+            stored: false,
+        }
+        const ptRef = db.collection('pushTokens').doc(request.user.uid);
+        const res = await ptRef.set({
+            token: request.body
+        });
+        result.stored = true;
+        return response.send(result);
+    } catch (e) {
+        console.log(e);
+        return response.status(500).send({
+            error: e.message
+        });
+    }
+}
+
 module.exports = {
     create,
     vote,
     cancelVote,
     cancel,
     resolve,
-    createRegistration
+    createRegistration,
+    storePushToken
 }
