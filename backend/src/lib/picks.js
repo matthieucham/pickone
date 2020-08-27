@@ -98,12 +98,15 @@ const create = async ({ admin }, request, response) => {
         if (!data.mode) {
             throw new ValidationError('mode')
         }
+        if (!data.cardinality) {
+            throw new ValidationError('cardinality')
+        }
     }
 
     const formatDoc = (user, userInfo, data) => {
         return {
             title: data.title,
-            description: "",
+            description: data.description || "",
             author: {
                 id: user.uid,
                 name: userInfo.displayName ? userInfo.displayName : userInfo.email,
@@ -118,6 +121,7 @@ const create = async ({ admin }, request, response) => {
             }),
             mode: (data.mode === 'random') ? 'random' : 'majority',
             suggest: (data.mode === 'random' && data.suggest) ? data.suggest : false,
+            multiple: (data.cardinality === 'multiple'),
             choices: [...data.choices]
         }
     }
@@ -179,12 +183,15 @@ const getPickOr404 = async (db, pickId, openOnly) => {
 const vote = async ({ admin }, request, response) => {
 
     const validate = (data, pick) => {
+        console.log(pick.choices);
         if ((!data.picked) || (data.picked.length == 0)) {
+            console.log("b");
             throw new ValidationError('picked')
         }
         // check free suggest only if permitted
         data.picked.forEach(c => {
             if (!pick.choices.includes(c) && !pick.suggest) {
+                console.log(c);
                 // unknown choice and no suggestion allowed
                 throw new ValidationError('picked');
             }
@@ -201,6 +208,7 @@ const vote = async ({ admin }, request, response) => {
 
     const db = admin.firestore();
     if (!request.body) {
+        console.log("d");
         return response.status(400).send({
             error: 'No data in body'
         });

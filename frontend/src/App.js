@@ -141,7 +141,7 @@ const AppSidebar = ({ user, onCloseButtonClick, onLogout, ...props }) => {
         <Box>
           {menuLinks.map((ml) => (
             <Box border="bottom" key={`menu${ml.label.replace(" ", "_")}`}>
-              <Button hoverIndicator onClick={() => { history.push(ml.path) }}>
+              <Button hoverIndicator onClick={() => { history.push(ml.path); onCloseButtonClick() }}>
                 <Box pad={{ horizontal: "medium", vertical: "small" }} align="start">
                   <Text weight="bold">{ml.label}</Text>
                 </Box>
@@ -163,7 +163,7 @@ const AppSidebar = ({ user, onCloseButtonClick, onLogout, ...props }) => {
                 user ? (
                   <Box>
                     <Box border="bottom">
-                      <Button hoverIndicator onClick={() => { history.push("/register") }}>
+                      <Button hoverIndicator onClick={() => { history.push("/register"); onCloseButtonClick() }}>
                         <Box pad={{ horizontal: "medium", vertical: "small" }} align="start">
                           <Text weight="bold" color="accent-1">Créer un compte</Text>
                         </Box>
@@ -180,7 +180,7 @@ const AppSidebar = ({ user, onCloseButtonClick, onLogout, ...props }) => {
                   </Box>
                 ) : (
                     <Box border="bottom">
-                      <Button hoverIndicator onClick={() => { history.push("/login") }}>
+                      <Button hoverIndicator onClick={() => { history.push("/login"); onCloseButtonClick() }}>
                         <Box pad={{ horizontal: "medium", vertical: "small" }} align="start">
                           <Text weight="bold" color="accent-1">Se connecter</Text>
                         </Box>

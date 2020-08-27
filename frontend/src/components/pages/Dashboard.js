@@ -34,7 +34,7 @@ class Dashboard extends Component {
         const { picks } = this.state;
         const { user } = this.props;
         return (
-            <Box direction="row-responsive" gap="medium" align="center" justify="start">
+            <Box direction="row-responsive" gap="small" align="center" justify="start" wrap>
                 {
                     picks.map(
                         ({ pickId, pickTitle, status, pickDate, pickAuthor }) => (

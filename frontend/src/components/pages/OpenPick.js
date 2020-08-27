@@ -60,17 +60,17 @@ const VotersBox = ({ userId, voters, hideAction, onCancel, ...props }) => {
 }
 
 
-const OpenPickForm = ({ choices, values, suggest, onSubmit }) => {
+const OpenPickForm = ({ choices, values, suggest, multiple, onSubmit }) => {
     const [pickedList, setPickedList] = React.useState(values ? values.filter(v => choices.includes(v)) : []);
     const [suggested, setSuggested] = React.useState(values ? values.filter(v => !choices.includes(v)).shift() : "");
     return (<Form pad="small" align="center" onSubmit={onSubmit}>
         <FormField label="Choix" name="picked" required>
-            {(true) ?
+            {(multiple) ?
                 (<CheckBoxGroup name="picked" options={choices} value={pickedList}
                     onChange={({ value: nextValue }) => setPickedList(nextValue)} />)
                 :
-                (<RadioButtonGroup name="picked" options={choices} value={pickedList}
-                    onChange={({ value: nextValue }) => setPickedList(nextValue)} />)
+                (<RadioButtonGroup name="picked" options={choices} value={pickedList ? pickedList[0] : undefined}
+                    onChange={(event) => { setPickedList([event.target.value]) }} />)
             }
         </FormField>
         {
@@ -207,9 +207,13 @@ class OpenPick extends Component {
 
         let values;
         if (this.state.pick.suggest === true && value.suggested) {
-            values = [...value.picked, value.suggested];
+            Array.isArray(value.picked) ?
+                values = [...value.picked, value.suggested] :
+                values = [value.picked, value.suggested];
         } else {
-            values = [...value.picked];
+            Array.isArray(value.picked) ?
+                values = [...value.picked] :
+                values = [value.picked];
         }
 
         const user = this.props.user;
@@ -236,6 +240,7 @@ class OpenPick extends Component {
                 this.props.addToast("Vote enregistré", { appearance: "success" })
             }
         } catch (e) {
+            console.log(e);
             this.setState({ loading: false, isError: true, errorMessage: e.message });
             this.props.addToast("Erreur lors de l'enregistrement du vote", { appearance: "error" })
         }
@@ -312,6 +317,7 @@ class OpenPick extends Component {
                 {pickFound && (
                     <Box align="center" fill="horizontal">
                         <Heading level="4">{pick.title}</Heading>
+                        <Text>{pick.description}</Text>
                         <Box pad="medium" direction="row" wrap>
                             <LabelAndValue label="Date" value={dayjs(pick.dateCreated).format('DD/MM/YYYY')} margin="xsmall" />
                             <LabelAndValue label="Organisateur" value={pick.author.name} margin="xsmall" />
@@ -329,7 +335,7 @@ class OpenPick extends Component {
 
                         {
                             !pick.result && !pick.cancelled &&
-                            <OpenPickForm choices={pick.choices} values={vote.choices || []} suggest={pick.suggest} onSubmit={this.onChoicesSubmitted} />
+                            <OpenPickForm choices={pick.choices} values={vote.choices || []} suggest={pick.suggest} multiple={pick.multiple} onSubmit={this.onChoicesSubmitted} />
                         }
                         {
                             pick.cancelled &&

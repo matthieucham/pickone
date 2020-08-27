@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import {
-    Box, Button, Keyboard, TextInput
+    Box, Button, FormField, Keyboard, TextInput
 } from 'grommet';
-import { FormAdd } from 'grommet-icons';
+import { AddCircle } from 'grommet-icons';
 
 import RemovableItemBox from "../lib/RemovableItemBox";
 
@@ -41,10 +41,13 @@ class ItemsField extends Component {
                 <Box direction="row" justify="start" alignContent="start" wrap>{boxes}</Box>
                 <Keyboard onEnter={(event) => { event.preventDefault(); this.addItem(newvalue) }}>
                     <Box direction="row" justify="start" alignContent="start" pad="xsmall">
-                        <TextInput placeholder="Choix" size="large"
-                            value={newvalue}
-                            onChange={event => this.setState({ newvalue: event.target.value })} />
-                        <Button icon={<FormAdd />} hoverIndicator onClick={() => this.addItem(newvalue)} />
+                        <FormField name="newvalue">
+                            <TextInput placeholder="Option" size="large"
+                                name="newvalue"
+                                value={newvalue}
+                                onChange={event => this.setState({ newvalue: event.target.value })} />
+                        </FormField>
+                        <Button icon={<AddCircle />} hoverIndicator onClick={() => this.addItem(newvalue)} />
                     </Box>
                 </Keyboard>
             </Box>
