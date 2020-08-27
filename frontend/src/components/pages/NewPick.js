@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 import {
-    Box, Button, CheckBox, Form, FormField, Heading, RadioButtonGroup, Text, TextInput
+    Box, Button, CheckBox, Form, FormField, Heading, Menu, RadioButtonGroup, Text, TextArea, TextInput
 } from 'grommet';
 import { Group, Risk } from 'grommet-icons';
 import { withRouter } from 'react-router-dom';
 
-import { withAPIService } from '../../hoc';
+import { withAPIService, withFirebaseService } from '../../hoc';
 import ItemsField from '../fields/ItemsField';
 
 
@@ -16,7 +16,20 @@ class NewPick extends Component {
         errorMessage: '',
         loading: false,
         showFieldSuggest: false,
-        choices: []
+        choices: [],
+        choicesLists: undefined
+    }
+
+    componentDidMount() {
+        const user = this.props.user;
+        this.props.FirebaseService.getDb().collection('users/' + user.id + '/lists/').orderBy('name').get().then(snapshot => {
+            if (snapshot.empty) {
+                this.setState({ choicesLists: undefined });
+            } else {
+                let lists = snapshot.docs.map(doc => doc.data());
+                this.setState({ choicesLists: lists });
+            }
+        });
     }
 
     handleSubmit = async ({ value }) => {
@@ -53,11 +66,11 @@ class NewPick extends Component {
     }
 
     render() {
-        const { isError, errorMessage, loading, showFieldSuggest, choices } = this.state;
+        const { isError, errorMessage, loading, showFieldSuggest, choices, choicesLists } = this.state;
         return (
             <Box align="center">
-                <Heading level="3">Organiser un Pick</Heading>
-                <Box fill align="center" justify="center">
+                <Heading level="3">Organiser un vote</Heading>
+                <Box align="center" justify="center">
                     <Box width="large">
                         <Form
                             onSubmit={this.handleSubmit}
@@ -66,11 +79,27 @@ class NewPick extends Component {
                                 <TextInput name="title" type="text" placeholder="Titre" />
                             </FormField>
 
-                            {/* <FormField label="Description" name="description">
-                                <TextArea placeholder="Description, contexte, etc." />
-                            </FormField> */}
+                            <FormField
+                                label="Description"
+                                name="description"
+                                info={
+                                    <Box>
+                                        <Text size="small">Quel est le contexte du vote : pour qui, pour quoi faire...</Text>
+                                    </Box>
+                                }>
+                                <TextArea placeholder="Description" />
+                            </FormField>
 
-                            <FormField label="Mode de choix" name="mode" required>
+                            <FormField
+                                label="Mode de vote"
+                                name="mode"
+                                info={
+                                    <Box>
+                                        <Text size="small">Au hasard: le gagnant sera tiré au sort parmi les choix des votants</Text>
+                                        <Text size="small">A la majorité: le gagnant sera le choix ayant obtenu le plus de voix</Text>
+                                    </Box>
+                                }
+                                required>
                                 <RadioButtonGroup
                                     name="mode"
                                     options={['random', 'majority']}
@@ -94,6 +123,20 @@ class NewPick extends Component {
                                 </RadioButtonGroup>
                             </FormField>
 
+                            <FormField
+                                label="Mode de choix"
+                                name="cardinality"
+                                required>
+                                <RadioButtonGroup
+                                    name="cardinality"
+                                    options={[
+                                        { value: "multiple", label: "Choix multiples" },
+                                        { value: "unique", label: "Choix unique" }
+                                    ]}
+                                    direction="row"
+                                />
+                            </FormField>
+
                             {showFieldSuggest && (
                                 <FormField name="suggest" label="Suggestions libres">
                                     <CheckBox
@@ -103,7 +146,12 @@ class NewPick extends Component {
                             )}
 
                             <FormField label="Choix possibles" name="choices" error={choices.length === 0 ? "Ce champ est requis" : ""}>
-
+                                {choicesLists &&
+                                    <Menu label="Liste prédéfinie"
+                                        items={
+                                            choicesLists.map(l => ({ label: l.name, onClick: () => { console.log(l.choices) } }))
+                                        }
+                                    />}
                                 <ItemsField value={choices}
                                     onChange={(val) => this.setState({ choices: val })} />
 
@@ -126,5 +174,5 @@ class NewPick extends Component {
     }
 }
 
-const WrappedComponent = withRouter(withAPIService(NewPick));
+const WrappedComponent = withRouter(withAPIService(withFirebaseService(NewPick)));
 export default WrappedComponent;

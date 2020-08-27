@@ -48,10 +48,6 @@ function notifyVoteFinished(db, messaging, pickId, pickData, iscancelled) {
         .then(
             (tokens) => {
                 let message = {
-                    // notification: {
-                    //     title: pickData.title,
-                    //     body: "Voir les résultats"
-                    // },
                     data: {
                         pickId: pickId,
                         pickTitle: pickData.title,
@@ -65,16 +61,11 @@ function notifyVoteFinished(db, messaging, pickId, pickData, iscancelled) {
             }
         ).then((response) => {
             if (response.failureCount > 0) {
-                //const failedTokens = [];
                 response.responses.forEach((resp, idx) => {
                     if (!resp.success) {
                         console.log(resp);
-                        //failedTokens.push(registrationTokens[idx]);
                     }
                 });
-                //console.log('List of tokens that caused failures: ' + failedTokens);
-            } else {
-                console.log(response);
             }
         })
         .catch((error) => {

@@ -31,6 +31,8 @@ import NewPick from './components/pages/NewPick';
 import Dashboard from './components/pages/Dashboard';
 import OpenPick from './components/pages/OpenPick';
 import Home from './components/pages/Home';
+import ChoicesLists from './components/pages/ChoicesLists';
+import EditList from './components/pages/EditList';
 
 const theme = {
   global: {
@@ -120,7 +122,7 @@ const AppSidebar = ({ user, onCloseButtonClick, onLogout, ...props }) => {
     menuLinks.push({ label: "Mes votes", path: "/dashboard" });
   }
   if (isLoggedIn) {
-    menuLinks.push({ label: "Nouveau vote", path: "/newpick" }, { label: "Mes listes" });
+    menuLinks.push({ label: "Nouveau vote", path: "/newpick" }, { label: "Mes listes", path: "/lists" });
   }
   return (
     <Sidebar width="medium" background="brand" pad="xsmall"
@@ -219,6 +221,15 @@ const AppRoutes = ({ user, onDisplayNameChanged }) => {
         <Route exact path="/dashboard">
           <Dashboard user={user} />
         </Route>
+        <Route exact path="/lists">
+          <ChoicesLists user={user} />
+        </Route>
+        <Route exact path="/newlist">
+          <EditList user={user} />
+        </Route>
+        <Route exact path="/editlist/:id">
+          <EditList user={user} />
+        </Route>
         <Route exact path="/newpick">
           <NewPick user={user} />
         </Route>
@@ -299,26 +310,13 @@ class App extends Component {
             this.setState({ pushMessaging: true, messaging: messaging });
           }
         )
-        //updateUIForPushEnabled(currentToken);
-        //this.setState({ pushMessaging: true });
       } else {
         // Show permission request.
         console.log('No Instance ID token available. Request permission to generate one.');
-        // Show permission UI.
-        //updateUIForPushPermissionRequired();
-        //setTokenSentToServer(false);
       }
     }).catch((err) => {
       console.log('An error occurred while retrieving token. ', err);
-      //showToken('Error retrieving Instance ID token. ', err);
-      //setTokenSentToServer(false);
     });
-
-    // messaging.onMessage((payload) => {
-    //   console.log('Message received. ', payload);
-    //   // ...
-    // });
-    // console.log("REGISTERED ONMESSAGE", messaging);
   }
 
   handleAuthLogin = async (user) => {

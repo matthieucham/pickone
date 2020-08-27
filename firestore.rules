@@ -14,7 +14,12 @@ service cloud.firestore {
     }
 
     match /registrations/{regId} {
-      allow read: if request.auth.uid != null && resource.data.userId == request.auth.uid
+      allow read: if request.auth.uid != null && resource.data.userId == request.auth.uid;
+    }
+
+    match /users/{userId}/lists/{listId} {
+      allow read: if request.auth.uid != null;
+      allow write: if request.auth.uid != null && userId == request.auth.uid;
     }
   }
 }
