@@ -18,21 +18,27 @@ class NewPick extends Component {
         errorMessage: '',
         loading: false,
         showFieldSuggest: false,
+        multipleSelected: false,
         choices: [],
         choicesLists: undefined,
         itemsFieldKey: "empty",
     }
 
     componentDidMount() {
+        this._isMounted = true;
         const user = this.props.user;
-        this.props.FirebaseService.getDb().collection('users/' + user.id + '/lists/').orderBy('name').get().then(snapshot => {
+        this._isMounted && this.props.FirebaseService.getDb().collection('users/' + user.id + '/lists/').orderBy('name').get().then(snapshot => {
             if (snapshot.empty) {
-                this.setState({ choicesLists: undefined });
+                this._isMounted && this.setState({ choicesLists: undefined });
             } else {
                 let lists = snapshot.docs.map(doc => doc.data());
-                this.setState({ choicesLists: lists });
+                this._isMounted && this.setState({ choicesLists: lists });
             }
         });
+    }
+
+    componentWillUnmount() {
+        this._isMounted = false;
     }
 
     handleSubmit = async ({ value }) => {
@@ -68,7 +74,7 @@ class NewPick extends Component {
     }
 
     render() {
-        const { isError, errorMessage, loading, showFieldSuggest, choices, choicesLists, itemsFieldKey } = this.state;
+        const { isError, errorMessage, loading, showFieldSuggest, choices, choicesLists, itemsFieldKey, multipleSelected } = this.state;
         return (
             <Box align="center">
                 <Heading level="3">Organiser un vote</Heading>
@@ -136,10 +142,11 @@ class NewPick extends Component {
                                         { value: "unique", label: "Choix unique" }
                                     ]}
                                     direction="row"
+                                    onChange={event => this.setState({ multipleSelected: event.target.value === 'multiple' })}
                                 />
                             </FormField>
 
-                            {showFieldSuggest && (
+                            {showFieldSuggest && multipleSelected && (
                                 <FormField name="suggest" label="Suggestions libres">
                                     <CheckBox
                                         name="suggest"

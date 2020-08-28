@@ -39,14 +39,17 @@ class Dashboard extends Component {
         const { picks } = this.state;
         const { user } = this.props;
         return (
-            <Box direction="row-responsive" gap="small" align="center" justify="start" wrap>
+            <Box direction="row" gap="small" align="center" justify="start" wrap>
+                {picks.length === 0 && <Box pad="small">
+                    <Button label="Nouveau vote" primary onClick={() => { this.props.history.push("/newpick") }} />
+                </Box>}
                 {
                     picks.map(
                         ({ pickId, pickTitle, status, pickDate, pickAuthor }) => (
                             <Card key={pickId} height="small" width="medium" background="light-1" margin="xsmall"
                                 onClick={() => { this.props.history.push(`/pick/${pickId}`) }}>
                                 <CardHeader pad="small">
-                                    <Text size="small">{dayjs(pickDate).format('DD/MM/YYYY')}</Text>
+                                    <Text size="small">{dayjs.unix(pickDate.seconds).format('DD/MM/YYYY')}</Text>
                                     {(status === "TERMINATED") ? (
                                         <StatusInfo color="brand" />
                                     )

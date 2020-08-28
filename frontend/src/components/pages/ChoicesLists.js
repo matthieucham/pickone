@@ -36,18 +36,23 @@ class ChoicesLists extends Component {
     }
 
     componentDidMount() {
+        this._isMounted = true;
         this.setState({ loading: true })
         const user = this.props.user;
-        this.props.FirebaseService.getDb().collection(`/users/${user.id}/lists`)
+        this._isMounted && this.props.FirebaseService.getDb().collection(`/users/${user.id}/lists`)
             .orderBy('dateUpdated', 'desc')
             .onSnapshot(querySnapshot => {
                 let foundlists = querySnapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
-                this.setState({
-                    lists: foundlists
+                this._isMounted && this.setState({
+                    lists: foundlists,
+                    loading: false
                 });
-                this.setState({ loading: false })
                 return null;
             });
+    }
+
+    componentWillUnmount() {
+        this._isMounted = false;
     }
 
     onDelete = (listId) => {
@@ -84,10 +89,25 @@ class ChoicesLists extends Component {
             );
     };
 
+    callCleanup = () => {
+        const user = this.props.user;
+        this.props.APIService.callAPIWithAuth(
+            `picks/testcleanup`,
+            user.idToken,
+            {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json'
+                }
+            }
+        )
+    }
+
     render() {
         const { lists, loading } = this.state;
         return (
             <Box align="center" pad="small">
+                {/* <Button label="TEST CLEANUP" onClick={this.callCleanup} /> */}
                 <Heading level="3">Listes de choix prédéfinis</Heading>
                 <Box width="large" align="center">
                     <RouterButton path="/newlist" label="Nouvelle liste" icon={<AddCircle />} />

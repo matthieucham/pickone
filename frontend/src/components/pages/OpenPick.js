@@ -77,7 +77,7 @@ const OpenPickForm = ({ choices, values, suggest, multiple, onSubmit }) => {
                     }
                 </FormField>
                 {
-                    suggest &&
+                    suggest && multiple &&
                     <FormField label="Une autre suggestion ?" name="suggested">
                         <TextInput name="suggested" size="large" value={suggested} onChange={event => setSuggested(event.target.value)} />
                     </FormField>
@@ -348,7 +348,7 @@ class OpenPick extends Component {
                         }
                         <Box pad="small" direction="row" wrap>
                             <LabelAndValue label="Statut" value={status.label} background={status.color} icon={status.icon} border round="xsmall" margin="small" />
-                            <LabelAndValue label="Date" value={dayjs(pick.dateCreated).format('DD/MM/YYYY')} border round="xsmall" margin="small" />
+                            <LabelAndValue label="Date" value={dayjs.unix(pick.dateCreated.seconds).format('DD/MM/YYYY')} border round="xsmall" margin="small" />
                             <LabelAndValue label="Organisateur" value={pick.author.name} border round="xsmall" margin="small" />
                             <LabelAndValue label="Mode d'élection" value={pick.mode === "random" ? "Au hasard" : "A la majorité"} border round="xsmall" margin="small" />
                             <VotersBox userId={this.props.user.id}

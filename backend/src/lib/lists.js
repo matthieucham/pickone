@@ -1,5 +1,3 @@
-const dayjs = require('dayjs')
-
 // Create a list of choices
 const createList = async ({ admin }, request, response) => {
     const db = admin.firestore();
@@ -28,7 +26,7 @@ const createList = async ({ admin }, request, response) => {
     const formatDoc = (data) => {
         return {
             name: data.name,
-            dateUpdated: dayjs().format(),
+            dateUpdated: admin.firestore.Timestamp.now(),
             choices: [...data.choices]
         }
     }
@@ -84,7 +82,7 @@ const editList = async ({ admin }, request, response) => {
     const formatDoc = (data) => {
         return {
             name: data.name,
-            dateUpdated: dayjs().format(),
+            dateUpdated: admin.firestore.Timestamp.now(),
             choices: [...data.choices]
         }
     }

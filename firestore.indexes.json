@@ -1,6 +1,34 @@
 {
   "indexes": [
     {
+      "collectionGroup": "picks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "cancelled",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "dateFinished",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "picks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "dateFinished",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "result",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "registrations",
       "queryScope": "COLLECTION",
       "fields": [

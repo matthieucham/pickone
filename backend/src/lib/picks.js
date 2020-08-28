@@ -1,5 +1,4 @@
-const dayjs = require('dayjs')
-const randomstring = require('randomstring')
+const randomstring = require('randomstring');
 
 class ValidationError extends Error {
     constructor(fieldName) {
@@ -112,7 +111,7 @@ const create = async ({ admin }, request, response) => {
                 name: userInfo.displayName ? userInfo.displayName : userInfo.email,
                 email: userInfo.email
             },
-            dateCreated: dayjs().format(),
+            dateCreated: admin.firestore.Timestamp.now(),
             key: randomstring.generate({
                 length: 6,
                 readable: true,
@@ -147,6 +146,7 @@ const create = async ({ admin }, request, response) => {
         makeRegistration(db, request.user.uid, result.pickId, docData);
         return response.send(result);
     } catch (e) {
+        console.log(e);
         return response.status(500).send({
             error: e.message
         });
@@ -170,12 +170,12 @@ const getPickOr404 = async (db, pickId, openOnly) => {
             // Vote annulé => error
             throw new PickNotFoundError(pickId);
         }
-        if (pickData.limit) {
-            if (dayjs(new Date()).isAfter(dayjs(pickData.limit))) {
-                // Limite déjà passée  => error
-                throw new PickNotFoundError(pickId);
-            }
-        }
+        // if (pickData.limit) {
+        //     if (dayjs(new Date()).isAfter(dayjs(pickData.limit))) {
+        //         // Limite déjà passée  => error
+        //         throw new PickNotFoundError(pickId);
+        //     }
+        // }
     }
     return pickData;
 }
@@ -201,7 +201,7 @@ const vote = async ({ admin }, request, response) => {
     const formatDoc = (user, data) => {
         return {
             name: user.displayName ? user.displayName : user.email,
-            date: dayjs().format(),
+            date: admin.firestore.Timestamp.now(),
             choices: [...data.picked]
         }
     }
@@ -320,7 +320,7 @@ const cancel = async ({ admin }, request, response) => {
         }
         let batch = db.batch();
         let pickRef = db.collection(`picks`).doc(request.params.pickId);
-        batch.update(pickRef, { cancelled: true });
+        batch.update(pickRef, { cancelled: true, dateFinished: admin.firestore.Timestamp.now() });
         db.collection(`registrations`).where("pickId", "==", request.params.pickId).get()
             .then(snapshot => {
                 snapshot.forEach(doc => {
@@ -420,7 +420,8 @@ const resolve = async ({ admin }, request, response) => {
                 result: {
                     winner: winner,
                     scores: scores
-                }
+                },
+                dateFinished: admin.firestore.Timestamp.now()
             }
         );
         db.collection(`registrations`).where("pickId", "==", request.params.pickId).get()
