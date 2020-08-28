@@ -4,7 +4,6 @@ import {
     Button,
     Text
 } from "grommet"
-import { InProgress, Scorecard, Clear } from "grommet-icons";
 import ConfirmationLayer from "../lib/ConfirmationLayer";
 
 
@@ -48,58 +47,26 @@ const CancelButton = ({ onCancel, ...props }) => {
     </Box>
 }
 
-const PickStatusBar = ({ pick, onClosePick, onCancelPick }) => {
-    const status = {
-        color: pick.cancelled ? "status-warning" : (
-            pick.result ? "status-unknown" : "status-ok"),
-        icon: pick.cancelled ? <Clear /> : (
-            pick.result ? <Scorecard /> : <InProgress />),
-        label: pick.cancelled ? "Vote annulé" : (
-            pick.result ? "Résultat" : "Vote en cours"
-        )
-    }
+const PickControlPanel = ({ pick, onClosePick, onCancelPick, ...props }) => {
 
     return (
-        <Box margin="none"
-            fill="horizontal"
-            pad={{ vertical: "small", horizontal: "small" }}
-            background={status.color}
-            direction="row"
-            justify="between"
-            wrap>
-            <Box direction="row" gap="small" align="center" justify="center">
-                <Text>{status.label}</Text>
-                {status.icon}
-            </Box>
-            {!pick.cancelled && !pick.result &&
-                <Box align="center" justify="center">
-                    <Text size="small">Code de partage</Text>
-                    <Text><strong>{pick.key}</strong></Text>
-                </Box>
-            }
-
-            {!pick.cancelled && !pick.result &&
-                <Box
-                    color="white"
-                    align="center"
-                    pad="small"
-                    gap="small">
-
+        <Box {...props}>
+            <Box align="center" pad="small" gap="small" width="medium" >
+                <Text>Vous êtes l'organisateur</Text>
+                <Box direction="row-responsive" align="center" gap="small">
                     {onClosePick &&
                         <CloseButton
-                            label="Terminer"
+                            label="Terminer et voir le résultat"
                             onClose={onClosePick}
                             primary
-                            color="status-unknown"
-                            size="large"
                             disabled={!pick.voters}
                         />}
                     {onCancelPick &&
-                        <CancelButton label="Annuler le vote" onCancel={onCancelPick} size="small" color="status-warning" />}
-                </Box>}
-
+                        <CancelButton label="Annuler le vote" onCancel={onCancelPick} />}
+                </Box>
+            </Box>
         </Box>
-    );
+    )
 }
 
-export default PickStatusBar;
+export default PickControlPanel;

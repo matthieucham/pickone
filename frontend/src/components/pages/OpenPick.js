@@ -3,12 +3,13 @@ import dayjs from 'dayjs';
 import {
     Box, Button, CheckBoxGroup, Distribution, Form, FormField, Heading, Menu, RadioButtonGroup, Text, TextInput
 } from 'grommet';
-import { Trash } from 'grommet-icons';
+import { Clear, InProgress, Scorecard, Trash } from 'grommet-icons';
 import { withRouter } from 'react-router-dom';
 
 import { withAPIService, withFirebaseService, withToast } from '../../hoc';
-import PickStatusBar from "../lib/PickStatusBar";
+import PickControlPanel from "../lib/PickControlPanel";
 import LabelAndValue from "../lib/LabelAndValue";
+import PickCodeDisplay from "../lib/PickCodeDisplay";
 import ConfirmationLayer from "../lib/ConfirmationLayer";
 import LoadingLayer from "../lib/LoadingLayer";
 
@@ -42,7 +43,7 @@ const VotersBox = ({ userId, voters, hideAction, onCancel, ...props }) => {
             }
         });
     }
-    return <Box border round="xsmall" {...props} align="center" justify="center">
+    return <Box align="center" justify="center" background="light-2" {...props} >
         <Menu dropProps={{
             align: { top: 'bottom', left: 'left' },
             elevation: 'medium',
@@ -63,26 +64,28 @@ const VotersBox = ({ userId, voters, hideAction, onCancel, ...props }) => {
 const OpenPickForm = ({ choices, values, suggest, multiple, onSubmit }) => {
     const [pickedList, setPickedList] = React.useState(values ? values.filter(v => choices.includes(v)) : []);
     const [suggested, setSuggested] = React.useState(values ? values.filter(v => !choices.includes(v)).shift() : "");
-    return (<Form pad="small" align="center" onSubmit={onSubmit}>
-        <FormField label="Choix" name="picked" required>
-            {(multiple) ?
-                (<CheckBoxGroup name="picked" options={choices} value={pickedList}
-                    onChange={({ value: nextValue }) => setPickedList(nextValue)} />)
-                :
-                (<RadioButtonGroup name="picked" options={choices} value={pickedList ? pickedList[0] : undefined}
-                    onChange={(event) => { setPickedList([event.target.value]) }} />)
-            }
-        </FormField>
-        {
-            suggest &&
-            <FormField label="Une autre suggestion ?" name="suggested">
-                <TextInput name="suggested" size="large" value={suggested} onChange={event => setSuggested(event.target.value)} />
-            </FormField>
-        }
+    return (
+        <Box pad="small" align="center" border="all" round="xsmall">
+            <Form onSubmit={onSubmit} align="center">
+                <FormField label="Je vote pour :" name="picked" required>
+                    {(multiple) ?
+                        (<CheckBoxGroup name="picked" options={choices} value={pickedList}
+                            onChange={({ value: nextValue }) => setPickedList(nextValue)} />)
+                        :
+                        (<RadioButtonGroup name="picked" options={choices} value={pickedList ? pickedList[0] : undefined}
+                            onChange={(event) => { setPickedList([event.target.value]) }} />)
+                    }
+                </FormField>
+                {
+                    suggest &&
+                    <FormField label="Une autre suggestion ?" name="suggested">
+                        <TextInput name="suggested" size="large" value={suggested} onChange={event => setSuggested(event.target.value)} />
+                    </FormField>
+                }
 
-        <Button type="submit" label="Voter" primary />
-
-    </Form>)
+                <Button type="submit" label="Voter" primary />
+            </Form>
+        </Box>)
 }
 
 const ResultPanel = ({ winner, scores }) => {
@@ -312,26 +315,49 @@ class OpenPick extends Component {
 
     render() {
         const { pick, pickFound, vote, loading, isOrga } = this.state;
+        const status = {
+            color: pick.cancelled ? "status-warning" : (
+                pick.result ? "brand" : "status-ok"),
+            icon: pick.cancelled ? <Clear size="small" /> : (
+                pick.result ? <Scorecard size="small" /> : <InProgress size="small" />),
+            label: pick.cancelled ? "Annulé" : (
+                pick.result ? "Terminé" : "En cours"
+            )
+        }
         return (
             <Box align="center" fill="horizontal">
                 {pickFound && (
                     <Box align="center" fill="horizontal">
                         <Heading level="4">{pick.title}</Heading>
-                        <Text>{pick.description}</Text>
-                        <Box pad="medium" direction="row" wrap>
-                            <LabelAndValue label="Date" value={dayjs(pick.dateCreated).format('DD/MM/YYYY')} margin="xsmall" />
-                            <LabelAndValue label="Organisateur" value={pick.author.name} margin="xsmall" />
-                            <LabelAndValue label="Mode d'élection" value={pick.mode === "random" ? "Au hasard" : "A la majorité"} margin="xsmall" />
+                        <Box pad="small"><Text>{pick.description}</Text></Box>
+                        {!pick.cancelled && !pick.result &&
+                            <Box direction="row-responsive" justify="between" gap="medium">
+                                <Box justify="center" align="center">
+                                    <PickCodeDisplay code={pick.key} border round="xsmall" background="dark-2" />
+                                </Box>
+
+                                {
+                                    isOrga &&
+                                    <PickControlPanel
+                                        border round="xsmall" elevation="small"
+                                        pick={pick}
+                                        onClosePick={this.terminate}
+                                        onCancelPick={this.cancel} />
+                                }
+                            </Box>
+                        }
+                        <Box pad="small" direction="row" wrap>
+                            <LabelAndValue label="Statut" value={status.label} background={status.color} icon={status.icon} border round="xsmall" margin="small" />
+                            <LabelAndValue label="Date" value={dayjs(pick.dateCreated).format('DD/MM/YYYY')} border round="xsmall" margin="small" />
+                            <LabelAndValue label="Organisateur" value={pick.author.name} border round="xsmall" margin="small" />
+                            <LabelAndValue label="Mode d'élection" value={pick.mode === "random" ? "Au hasard" : "A la majorité"} border round="xsmall" margin="small" />
                             <VotersBox userId={this.props.user.id}
                                 voters={pick.voters}
                                 onCancel={isOrga ? this.cancelVote : undefined}
                                 hideAction={pick.result || pick.cancelled}
-                                margin="xsmall" />
+                                border round="xsmall"
+                                margin="small" />
                         </Box>
-
-                        <PickStatusBar pick={pick}
-                            onClosePick={isOrga ? this.terminate : undefined}
-                            onCancelPick={isOrga ? this.cancel : undefined} />
 
                         {
                             !pick.result && !pick.cancelled &&

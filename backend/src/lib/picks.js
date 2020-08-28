@@ -488,10 +488,19 @@ const createRegistration = async ({ admin }, request, response) => {
             });
         }
         snapshot.forEach(doc => {
-            makeRegistration(db, request.user.uid, doc.id, doc.data());
-            // On peut s'arrêter dès le premier résultat trouvé (clés uniques)
+            // On vérifie si la registration existe déjà pour ce user et ce pick
+            db.collection("registrations").where("userId", "==", request.user.uid).where("pickId", "==", doc.id).get().then(
+                (snapshot) => {
+                    if (snapshot.empty) {
+                        makeRegistration(db, request.user.uid, doc.id, doc.data());
+                    }
+                    return;
+                }
+            )
             result.created = true;
             result.pickId = doc.id;
+
+            // On peut s'arrêter dès le premier résultat trouvé (clés uniques)
             return response.send(result);
         });
     } catch (e) {

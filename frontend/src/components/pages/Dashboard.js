@@ -15,19 +15,24 @@ class Dashboard extends Component {
     }
 
     componentDidMount() {
+        this._isMounted = true;
         const user = this.props.user;
-        this.props.FirebaseService.getDb().collection('registrations/')
+        this._isMounted && this.props.FirebaseService.getDb().collection('registrations/')
             .where('userId', '==', user.id)
             .orderBy('pickDate', 'desc')
             .onSnapshot(querySnapshot => {
                 let open = querySnapshot.docs.map(doc => doc.data());
-                this.setState({
+                this._isMounted && this.setState({
                     openPicks: open.filter(p => !p.status),
                     terminatedPicks: open.filter(p => p.status === "TERMINATED"),
                     picks: open
                 });
                 return null;
             });
+    }
+
+    componentWillUnmount() {
+        this._isMounted = false;
     }
 
     render() {
