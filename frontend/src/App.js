@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import { withRouter, Redirect, Route, Switch, useHistory } from 'react-router-dom';
 import { ToastProvider } from 'react-toast-notifications';
 
@@ -33,6 +33,7 @@ import OpenPick from './components/pages/OpenPick';
 import Home from './components/pages/Home';
 import ChoicesLists from './components/pages/ChoicesLists';
 import EditList from './components/pages/EditList';
+import JoinPick from './components/login/JoinPick';
 
 const theme = {
   global: {
@@ -111,12 +112,13 @@ class PushMessageNotifier extends Component {
 
 const DecoratedPushMessageNotifier = withToast(withFirebaseService(PushMessageNotifier));
 
-const AppSidebar = ({ user, onCloseButtonClick, onLogout, ...props }) => {
-  let history = useHistory();
+const AppSidebar = ({ user, onCloseButtonClick, onLogout, onAnonymousLogin, ...props }) => {
+  const history = useHistory();
+  const [openCodeDialog, setOpenCodeDialog] = useState(false);
   const isLoggedIn = user && !user.anonymous;
   const menuLinks = [
     { label: "Accueil", path: "/" },
-    { label: "Rejoindre un vote" }
+    { label: "Rejoindre un vote", onClick: () => setOpenCodeDialog(true) }
   ];
   if (user) {
     menuLinks.push({ label: "Mes votes", path: "/dashboard" });
@@ -141,7 +143,18 @@ const AppSidebar = ({ user, onCloseButtonClick, onLogout, ...props }) => {
         <Box>
           {menuLinks.map((ml) => (
             <Box border="bottom" key={`menu${ml.label.replace(" ", "_")}`}>
-              <Button hoverIndicator onClick={() => { history.push(ml.path); onCloseButtonClick() }}>
+              <Button
+                hoverIndicator
+                onClick={() => {
+                  if (ml.onClick) {
+                    ml.onClick();
+                  }
+                  if (ml.path) {
+                    history.push(ml.path);
+                  }
+                  onCloseButtonClick()
+                }
+                }>
                 <Box pad={{ horizontal: "medium", vertical: "small" }} align="start">
                   <Text weight="bold">{ml.label}</Text>
                 </Box>
@@ -205,6 +218,12 @@ const AppSidebar = ({ user, onCloseButtonClick, onLogout, ...props }) => {
             </Box>}
         </Box>
       </Box>
+      {
+        openCodeDialog &&
+        <JoinPick user={user}
+          onClose={() => setOpenCodeDialog(false)}
+          onAnonymousLogin={onAnonymousLogin} />
+      }
     </Sidebar>
   )
 }
@@ -346,6 +365,13 @@ class App extends Component {
     await this.setState({ loading: false });
   }
 
+  onDisplayNameChanged = (displayName, notanonymous) => {
+    let user = { ...this.state.user }
+    user.displayName = displayName;
+    user.anonymous = !notanonymous;
+    this.setState({ user })
+  }
+
   componentDidMount() {
     const auth = this.props.FirebaseService.getAuth();
     if (auth.currentUser) {
@@ -374,12 +400,7 @@ class App extends Component {
                   autoDismissTimeout={6000}
                   components={{ Toast: NotificationToast }}
                   placement="bottom-center">
-                  <AppRoutes user={user} onDisplayNameChanged={(displayName, notanonymous) => {
-                    let user = { ...this.state.user }
-                    user.displayName = displayName;
-                    user.anonymous = !notanonymous;
-                    this.setState({ user })
-                  }} />
+                  <AppRoutes user={user} onDisplayNameChanged={this.onDisplayNameChanged} />
                 </ToastProvider>
               </Box>
 
@@ -396,6 +417,7 @@ class App extends Component {
                       user={user}
                       onCloseButtonClick={() => this.setState({ showSidebar: false })}
                       onLogout={this.signOut}
+                      onAnonymousLogin={this.onDisplayNameChanged}
                       fill />
                   </Layer>
                 )}
