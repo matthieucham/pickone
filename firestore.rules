@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /picks/{pickId} {
+      allow read: if request.auth.uid != null;
+      allow write: if request.auth.uid != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
+
+      match /votes/{voterId} {
+        allow read: if request.auth.uid != null;
+        allow create, update: if request.auth.uid != null && request.auth.uid == voterId;
+        allow delete: if request.auth.uid != null && get(/databases/$(database)/documents/picks/$(pickId)).data.author.id == request.auth.uid;
+      }
+    }
+
+    match /registrations/{regId} {
+      allow read: if request.auth.uid != null && resource.data.userId == request.auth.uid;
+    }
+
+    match /users/{userId}/lists/{listId} {
+      allow read: if request.auth.uid != null;
+      allow write: if request.auth.uid != null && userId == request.auth.uid;
+    }
+  }
+}
