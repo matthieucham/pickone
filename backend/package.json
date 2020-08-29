@@ -6,7 +6,8 @@
     "shell": "firebase functions:shell",
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "logs": "firebase functions:log",
+    "lint": ""
   },
   "engines": {
     "node": "10"
@@ -16,7 +17,7 @@
     "dayjs": "^1.8.32",
     "express": "^4.17.1",
     "firebase-admin": "^8.10.0",
-    "firebase-functions": "^3.6.1",
+    "firebase-functions": "^3.11.0",
     "randomstring": "^1.1.5"
   },
   "devDependencies": {

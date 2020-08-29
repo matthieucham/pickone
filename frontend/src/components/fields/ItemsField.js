@@ -42,7 +42,7 @@ class ItemsField extends Component {
                 <Keyboard onEnter={(event) => { event.preventDefault(); this.addItem(newvalue) }}>
                     <Box direction="row" justify="start" alignContent="start" pad="xsmall">
                         <FormField name="newvalue">
-                            <TextInput placeholder="Option" size="large"
+                            <TextInput placeholder="Option"
                                 name="newvalue"
                                 value={newvalue}
                                 onChange={event => this.setState({ newvalue: event.target.value })} />

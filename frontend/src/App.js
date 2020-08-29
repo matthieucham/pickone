@@ -1,7 +1,7 @@
 import React, { Component, useState } from 'react';
 import { withRouter, Redirect, Route, Switch, useHistory } from 'react-router-dom';
 import { ToastProvider } from 'react-toast-notifications';
-import customTheme from "./theme/Light.json";
+//mport customTheme from "./theme/Light.json";
 //import { customTheme } from "./theme/Light";
 
 import {
@@ -39,28 +39,18 @@ import JoinPick from './components/login/JoinPick';
 
 
 
-// const theme = {
-//   global: {
-//     colors: {
-//       //brand: '#228BE6',
-//     },
-//     font: {
-//       family: 'Roboto',
-//       size: '18px',
-//       height: '20px',
-//     }
-//   },
-//   // button: {
-//   //   border: {
-//   //     width: '1px',
-//   //     radius: '4px'
-//   //   },
-//   //   minWidth: '48px',
-//   //   padding: {
-//   //     horizontal: '9px'
-//   //   }
-//   // },
-// };
+const theme = {
+  global: {
+    colors: {
+      //brand: '#228BE6',
+    },
+    font: {
+      family: 'Roboto',
+      size: '18px',
+      height: '20px',
+    }
+  }
+};
 
 
 const AppHeader = ({ hasOpenButton, hasNotif, onOpenButtonClick, user, messaging, ...props }) => (
@@ -397,7 +387,7 @@ class App extends Component {
   render() {
     const { user, messaging } = this.state;
     return (
-      <Grommet theme={customTheme} full>
+      <Grommet theme={theme} full>
         <ResponsiveContext.Consumer>
           {size => (
             <Main direction="row" overflow={{ horizontal: 'hidden' }}>
