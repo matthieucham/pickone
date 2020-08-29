@@ -53,7 +53,7 @@ class SocialNetworks extends Component {
     render() {
         return <Box direction="row" justify="center" pad="medium" gap="small">
             <Button type="submit" label="Google" icon={<Google />} onClick={this.handleGoogle} />
-            <Button type="submit" label="Facebook" icon={<Facebook />} />
+            {/* <Button type="submit" label="Facebook" icon={<Facebook />} /> */}
         </Box>
     }
 }

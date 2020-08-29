@@ -1,6 +1,8 @@
 import React, { Component, useState } from 'react';
 import { withRouter, Redirect, Route, Switch, useHistory } from 'react-router-dom';
 import { ToastProvider } from 'react-toast-notifications';
+import customTheme from "./theme/Light.json";
+//import { customTheme } from "./theme/Light";
 
 import {
   Anchor,
@@ -35,18 +37,30 @@ import ChoicesLists from './components/pages/ChoicesLists';
 import EditList from './components/pages/EditList';
 import JoinPick from './components/login/JoinPick';
 
-const theme = {
-  global: {
-    colors: {
-      //brand: '#228BE6',
-    },
-    font: {
-      family: 'Roboto',
-      size: '18px',
-      height: '20px',
-    }
-  },
-};
+
+
+// const theme = {
+//   global: {
+//     colors: {
+//       //brand: '#228BE6',
+//     },
+//     font: {
+//       family: 'Roboto',
+//       size: '18px',
+//       height: '20px',
+//     }
+//   },
+//   // button: {
+//   //   border: {
+//   //     width: '1px',
+//   //     radius: '4px'
+//   //   },
+//   //   minWidth: '48px',
+//   //   padding: {
+//   //     horizontal: '9px'
+//   //   }
+//   // },
+// };
 
 
 const AppHeader = ({ hasOpenButton, hasNotif, onOpenButtonClick, user, messaging, ...props }) => (
@@ -168,7 +182,7 @@ const AppSidebar = ({ user, onCloseButtonClick, onLogout, onAnonymousLogin, ...p
               <Box border="bottom">
                 <Button hoverIndicator onClick={onLogout}>
                   <Box pad={{ horizontal: "medium", vertical: "small" }} align="start">
-                    <Text weight="bold" color="accent-1">Déconnexion</Text>
+                    <Text weight="bold" color="accent-2">Déconnexion</Text>
                   </Box>
                 </Button>
               </Box>
@@ -178,7 +192,7 @@ const AppSidebar = ({ user, onCloseButtonClick, onLogout, onAnonymousLogin, ...p
                     <Box border="bottom">
                       <Button hoverIndicator onClick={() => { history.push("/register"); onCloseButtonClick() }}>
                         <Box pad={{ horizontal: "medium", vertical: "small" }} align="start">
-                          <Text weight="bold" color="accent-1">Créer un compte</Text>
+                          <Text weight="bold" color="accent-2">Créer un compte</Text>
                         </Box>
                       </Button>
                     </Box>
@@ -195,7 +209,7 @@ const AppSidebar = ({ user, onCloseButtonClick, onLogout, onAnonymousLogin, ...p
                     <Box border="bottom">
                       <Button hoverIndicator onClick={() => { history.push("/login"); onCloseButtonClick() }}>
                         <Box pad={{ horizontal: "medium", vertical: "small" }} align="start">
-                          <Text weight="bold" color="accent-1">Se connecter</Text>
+                          <Text weight="bold" color="accent-2">Se connecter</Text>
                         </Box>
                       </Button>
                     </Box>
@@ -383,7 +397,7 @@ class App extends Component {
   render() {
     const { user, messaging } = this.state;
     return (
-      <Grommet theme={theme} full>
+      <Grommet theme={customTheme} full>
         <ResponsiveContext.Consumer>
           {size => (
             <Main direction="row" overflow={{ horizontal: 'hidden' }}>

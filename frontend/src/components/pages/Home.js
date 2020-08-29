@@ -31,23 +31,22 @@ const Home = ({ user, onAnonymousLogin }) => {
                     <Heading level="1">vote ?</Heading>
                 </Box>
             </Box>
-            <Box pad="large" background="neutral-3"
+            <Box pad="large"
                 animation={{
                     type: "fadeIn",
                     delay: 400,
                     duration: 2000
                 }}>
-                <Text>Quel resto ?</Text>
-                <Text>Quel prénom pour le bébé ?</Text>
-                <Text>Claude, Teheiura ou Tirié ?</Text>
-                <Text>Il bluffe ou il bluffe pas ?</Text>
+                <Text>- Quel resto pour ce midi ?</Text>
+                <Text>- Therry, Thierri ou Tirié ?</Text>
+                <Text>- Il bluffe ou il bluffe pas ? Moi je dis il bluffe</Text>
                 <Text>...</Text>
                 <Heading level="2">Cette appli va mettre tout le monde d'accord</Heading>
                 <Text textAlign="end" weight="bold">en décidant à votre place.</Text>
             </Box>
 
             <Box>
-                <Button size="large" label="Rejoindre un vote" primary onClick={() => setOpenCodeDialog(true)} />
+                <Button size="large" label="Rejoindre un vote" icon={<Chat />} primary onClick={() => setOpenCodeDialog(true)} />
             </Box>
             {
                 openCodeDialog &&
