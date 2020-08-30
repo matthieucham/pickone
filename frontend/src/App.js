@@ -390,7 +390,7 @@ class App extends Component {
       <Grommet theme={theme} full>
         <ResponsiveContext.Consumer>
           {size => (
-            <Main direction="row" overflow={{ horizontal: 'hidden' }}>
+            <Box direction="row" overflow={{ horizontal: 'hidden' }} flex="grow">
               <Box fill="horizontal">
                 <AppHeader
                   hasOpenButton={!this.state.showSidebar}
@@ -426,7 +426,7 @@ class App extends Component {
                   </Layer>
                 )}
 
-            </Main>
+            </Box>
           )}
         </ResponsiveContext.Consumer>
       </Grommet >

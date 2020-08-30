@@ -54,7 +54,7 @@ class Login extends Component {
         return (
             <Box align="center" pad="small">
                 <Heading level="3">Login</Heading>
-                <Box fill align="center" justify="center">
+                <Box align="center" justify="center">
                     <Box width="medium">
                         <Form
                             onSubmit={this.handleSubmit}
