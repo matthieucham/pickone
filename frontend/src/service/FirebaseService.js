@@ -6,12 +6,14 @@ require("firebase/auth");
 require("firebase/firestore");
 require("firebase/storage");
 require("firebase/messaging");
+require("firebase/analytics");
 
 class FirebaseService {
 
     constructor(firebaseConfig) {
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
+            firebase.analytics();
         }
         this.vapidKey = firebaseConfig.vapidKey;
     }

@@ -83,7 +83,7 @@ class Login extends Component {
                             <Link to="/register">S'inscrire</Link>
                         </Box>
                     </Box>
-                    <Box width="medium" margin="medium">
+                    <Box width="medium" margin="medium" flex={false}>
                         <Text>Ou bien avec</Text>
                         <SocialNetworks />
                     </Box>

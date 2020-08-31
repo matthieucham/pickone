@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import {
     Box, Button, Card, CardHeader, CardBody, CardFooter, Text
 } from 'grommet';
-import { StatusDisabled, StatusInfo, StatusUnknown, User } from 'grommet-icons';
+import { AddCircle, StatusDisabled, StatusInfo, StatusUnknown, User } from 'grommet-icons';
 
 import { withFirebaseService } from '../../hoc';
 import { withRouter } from 'react-router-dom';
@@ -39,87 +39,72 @@ class Dashboard extends Component {
         const { picks } = this.state;
         const { user } = this.props;
         return (
-            <Box direction="row" gap="small" align="center" justify="start" wrap>
-                {picks.length === 0 && <Box pad="small">
-                    <Button label="Nouveau vote" primary onClick={() => { this.props.history.push("/newpick") }} />
-                </Box>}
-                {
-                    picks.map(
-                        ({ pickId, pickTitle, status, pickDate, pickAuthor }) => (
-                            <Card key={pickId} height="small" width="medium" background="light-1" margin="xsmall"
-                                onClick={() => { this.props.history.push(`/pick/${pickId}`) }}>
-                                <CardHeader pad="small">
-                                    <Text size="small">{dayjs.unix(pickDate.seconds).format('DD/MM/YYYY')}</Text>
-                                    {(status === "TERMINATED") ? (
-                                        <StatusInfo color="brand" />
-                                    )
-                                        : (
-                                            (status === "CANCELLED") ? (
-                                                <StatusDisabled color="status-warning" />
-                                            ) : (
-                                                    <StatusUnknown color="status-ok" />
-                                                )
+            <Box align="center">
+                <Box pad="medium" width="medium" align="center">
+                    <Button label="Nouveau vote" icon={<AddCircle />} onClick={() => { this.props.history.push("/newpick") }} />
+                </Box>
+
+                <Box direction="row" gap="small" align="center" justify="start" wrap>
+                    {
+                        picks.map(
+                            ({ pickId, pickTitle, status, pickDate, pickAuthor }) => (
+                                <Card key={pickId} height="small" width="medium" background="light-1" margin="xsmall"
+                                    onClick={() => { this.props.history.push(`/pick/${pickId}`) }}>
+                                    <CardHeader pad="small">
+                                        <Text size="small">{dayjs.unix(pickDate.seconds).format('DD/MM/YYYY')}</Text>
+                                        {(status === "TERMINATED") ? (
+                                            <StatusInfo color="brand" />
                                         )
-                                    }
-                                </CardHeader>
-                                <CardBody pad="small" align="center" justify="center">
-                                    <Text weight="bold">{pickTitle}</Text>
-                                </CardBody>
-                                <CardFooter pad="small" background="light-2">
-                                    <Button
-                                        icon={<User />}
-                                        label={
-                                            <Text size="small" weight={pickAuthor.id === user.id ? "bold" : "normal"}>
-                                                {pickAuthor.name}</Text>
+                                            : (
+                                                (status === "CANCELLED") ? (
+                                                    <StatusDisabled color="status-warning" />
+                                                ) : (
+                                                        <StatusUnknown color="status-ok" />
+                                                    )
+                                            )
                                         }
-                                        plain />
-                                    {(status === "TERMINATED") ? (
-                                        <Box background="brand"
-                                            round="xsmall"
-                                            pad="xsmall">
-                                            <Text size="small" weight="bold">Terminé</Text>
-                                        </Box>
-                                    )
-                                        : (
-                                            (status === "CANCELLED") ? (
-                                                <Box background="status-warning"
-                                                    round="xsmall"
-                                                    pad="xsmall">
-                                                    <Text size="small" weight="bold">Annulé</Text>
-                                                </Box>
-                                            ) : (
-                                                    <Box background="status-ok"
+                                    </CardHeader>
+                                    <CardBody pad="small" align="center" justify="center">
+                                        <Text weight="bold">{pickTitle}</Text>
+                                    </CardBody>
+                                    <CardFooter pad="small" background="light-2">
+                                        <Button
+                                            icon={<User />}
+                                            label={
+                                                <Text size="small" weight={pickAuthor.id === user.id ? "bold" : "normal"}>
+                                                    {pickAuthor.name}</Text>
+                                            }
+                                            plain />
+                                        {(status === "TERMINATED") ? (
+                                            <Box background="brand"
+                                                round="xsmall"
+                                                pad="xsmall">
+                                                <Text size="small" weight="bold">Terminé</Text>
+                                            </Box>
+                                        )
+                                            : (
+                                                (status === "CANCELLED") ? (
+                                                    <Box background="status-warning"
                                                         round="xsmall"
                                                         pad="xsmall">
-                                                        <Text size="small" weight="bold">En cours</Text>
+                                                        <Text size="small" weight="bold">Annulé</Text>
                                                     </Box>
-                                                )
-                                        )
-                                    }
-                                </CardFooter>
-                            </Card>
+                                                ) : (
+                                                        <Box background="status-ok"
+                                                            round="xsmall"
+                                                            pad="xsmall">
+                                                            <Text size="small" weight="bold">En cours</Text>
+                                                        </Box>
+                                                    )
+                                            )
+                                        }
+                                    </CardFooter>
+                                </Card>
+                            )
                         )
-                    )
-                }
+                    }
+                </Box>
             </Box>
-            // <Grid
-            //     rows={["1/2", "1/2"]}
-            //     columns={["full"]}
-            //     gap="medium"
-            //     areas={[
-            //         { name: 'current', start: [0, 0], end: [0, 0] },
-            //         { name: 'past', start: [0, 1], end: [0, 1] },
-            //     ]}
-            //     fill
-            // >
-            //     <Box gridArea="current" fill wrap direction="row" alignContent="start" justify="start">
-            //         <NewPick />
-            //         {opicks}
-            //     </Box>
-            //     <Box gridArea="past" fill wrap direction="row" alignContent="start" justify="start" background='light-4'>
-            //         {tpicks}
-            //     </Box>
-            // </Grid>
         )
     }
 }

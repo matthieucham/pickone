@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import {
     Box, Button
 } from 'grommet';
-import { Facebook, Google } from 'grommet-icons';
+import { Google } from 'grommet-icons';
 
 import firebase from 'firebase/app';
 
@@ -51,7 +51,7 @@ class SocialNetworks extends Component {
     }
 
     render() {
-        return <Box direction="row" justify="center" pad="medium" gap="small">
+        return <Box direction="row" justify="center" pad="medium" gap="small" flex={false}>
             <Button type="submit" label="Google" icon={<Google />} onClick={this.handleGoogle} />
             {/* <Button type="submit" label="Facebook" icon={<Facebook />} /> */}
         </Box>

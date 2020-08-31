@@ -12,7 +12,6 @@ import {
   Grommet,
   Header,
   Layer,
-  Main,
   ResponsiveContext,
   Sidebar,
   Text
@@ -36,13 +35,14 @@ import Home from './components/pages/Home';
 import ChoicesLists from './components/pages/ChoicesLists';
 import EditList from './components/pages/EditList';
 import JoinPick from './components/login/JoinPick';
+import About from './components/pages/About';
 
 
 
 const theme = {
   global: {
     colors: {
-      //brand: '#228BE6',
+      brand: '#3D138D',
     },
     font: {
       family: 'Roboto',
@@ -134,7 +134,11 @@ const AppSidebar = ({ user, onCloseButtonClick, onLogout, onAnonymousLogin, ...p
     <Sidebar width="medium" background="brand" pad="xsmall"
       footer=
       {
-        <Text textAlign="end">MG 2020</Text>
+        <Button hoverIndicator onClick={() => { history.push("/about"); onCloseButtonClick() }}>
+          <Box pad={{ horizontal: "medium", vertical: "small" }} align="end">
+            <Text weight="bold">A propos</Text>
+          </Box>
+        </Button>
       }
       {...props}
     >
@@ -172,7 +176,7 @@ const AppSidebar = ({ user, onCloseButtonClick, onLogout, onAnonymousLogin, ...p
               <Box border="bottom">
                 <Button hoverIndicator onClick={onLogout}>
                   <Box pad={{ horizontal: "medium", vertical: "small" }} align="start">
-                    <Text weight="bold" color="accent-2">Déconnexion</Text>
+                    <Text weight="bold" color="accent-1">Déconnexion</Text>
                   </Box>
                 </Button>
               </Box>
@@ -182,7 +186,7 @@ const AppSidebar = ({ user, onCloseButtonClick, onLogout, onAnonymousLogin, ...p
                     <Box border="bottom">
                       <Button hoverIndicator onClick={() => { history.push("/register"); onCloseButtonClick() }}>
                         <Box pad={{ horizontal: "medium", vertical: "small" }} align="start">
-                          <Text weight="bold" color="accent-2">Créer un compte</Text>
+                          <Text weight="bold" color="accent-1">Créer un compte</Text>
                         </Box>
                       </Button>
                     </Box>
@@ -199,7 +203,7 @@ const AppSidebar = ({ user, onCloseButtonClick, onLogout, onAnonymousLogin, ...p
                     <Box border="bottom">
                       <Button hoverIndicator onClick={() => { history.push("/login"); onCloseButtonClick() }}>
                         <Box pad={{ horizontal: "medium", vertical: "small" }} align="start">
-                          <Text weight="bold" color="accent-2">Se connecter</Text>
+                          <Text weight="bold" color="accent-1">Se connecter</Text>
                         </Box>
                       </Button>
                     </Box>
@@ -259,6 +263,9 @@ const AppRoutes = ({ user, onDisplayNameChanged }) => {
         <Route exact path="/pick/:id">
           <OpenPick user={user} />
         </Route>
+        <Route exact path="/about">
+          <About />
+        </Route>
         <Route exact path="/"><Home user={user} onAnonymousLogin={onDisplayNameChanged} /></Route>
       </Switch>
     </Box>
@@ -267,6 +274,9 @@ const AppRoutes = ({ user, onDisplayNameChanged }) => {
         <Switch>
           <Route exact path="/login"> <Login /></Route>
           <Route exact path="/register"><Register user={user} onDisplayNameChanged={onDisplayNameChanged} /></Route>
+          <Route exact path="/about">
+            <About />
+          </Route>
           <Route exact path="/"><Home user={user} onAnonymousLogin={onDisplayNameChanged} /></Route>
           <Route path="/">
             <Redirect to="/login" />
@@ -390,7 +400,8 @@ class App extends Component {
       <Grommet theme={theme} full>
         <ResponsiveContext.Consumer>
           {size => (
-            <Box direction="row" overflow={{ horizontal: 'hidden' }} flex="grow">
+
+            <Box direction="row" as="main" flex="grow" overflow={{ horizontal: 'hidden', vertical: 'hidden' }} height={{ min: '100%' }}>
               <Box fill="horizontal">
                 <AppHeader
                   hasOpenButton={!this.state.showSidebar}
@@ -425,8 +436,8 @@ class App extends Component {
                       fill />
                   </Layer>
                 )}
-
             </Box>
+
           )}
         </ResponsiveContext.Consumer>
       </Grommet >
