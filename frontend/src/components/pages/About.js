@@ -7,10 +7,11 @@ import {
 
 
 const About = () =>
-    <Box width="large" align="center" pad="small">
+    <Box width="large" alignSelf="center" pad="small">
         <Text>J'ai développé ce site en 2020, autour de la technologie Firebase</Text>
-        <Text>Pour toute question, contactez-moi au travers de ma page Linkedin</Text>
-        <Anchor href="https://www.linkedin.com/in/matthieugrandrie/">Linkedin</Anchor>
+        <Text weight="bold">Une question ?</Text>
+        <Box direction="row" gap="xsmall">Contactez-moi au travers de ma page<Anchor href="https://www.linkedin.com/in/matthieugrandrie/">Linkedin</Anchor></Box>
+
     </Box>
 
 export default About;

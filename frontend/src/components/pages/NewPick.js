@@ -1,14 +1,96 @@
 import React, { Component } from 'react';
 import {
-    Box, Button, CheckBox, Form, FormField, Heading, Menu, RadioButtonGroup, Text, TextArea, TextInput
+    Box, Button, CheckBox, Form, FormField, Heading, Layer, Menu, RadioButtonGroup, Text, TextArea, TextInput
 } from 'grommet';
-import { Group, NewWindow, Risk } from 'grommet-icons';
+import { CloudUpload, Group, NewWindow, Risk } from 'grommet-icons';
 import { withRouter } from 'react-router-dom';
 
 import { withAPIService, withFirebaseService } from '../../hoc';
 import ItemsField from '../fields/ItemsField';
 import LoadingLayer from "../lib/LoadingLayer";
 
+
+class SaveListLayer extends Component {
+
+    state = {
+        loading: false,
+        errorMessage: ""
+    }
+
+    handleSubmit = async ({ value }) => {
+        await this.setState({
+            errorMessage: "",
+            loading: true
+        });
+
+        const user = this.props.user;
+        const method = 'POST';
+        const url = 'picks/lists/';
+        try {
+            const response = await this.props.APIService.callAPIWithAuth(
+                url,
+                user.idToken,
+                {
+                    method: method,
+                    body: JSON.stringify({ ...value, choices: this.props.choices }),
+                    headers: {
+                        'content-type': 'application/json'
+                    }
+                }
+            ).then(response => response.json());
+            if ("error" in response) {
+                this.setState({ loading: false, errorMessage: response.error });
+            } else {
+                this.setState({ loading: false });
+                this.props.onCancelAction();
+            }
+        } catch (e) {
+            this.setState({ loading: false, errorMessage: e.message });
+        }
+    }
+
+    render() {
+        const { onCancelAction } = this.props;
+        const { loading, errorMessage } = this.state;
+        return (
+            <Layer position="center" onClickOutside={onCancelAction} onEsc={onCancelAction}>
+                <Box pad="medium" gap="small" width="medium">
+                    <Heading level={3} margin="none">Enregistrer comme liste</Heading>
+                    <Text>Vous pourrez retrouver cette liste de choix dans vos listes prédéfinies et la réutiliser pour d'autres votes.</Text>
+                    <Form onSubmit={this.handleSubmit}>
+                        <FormField label="Nom de la liste" name="name" required>
+                            <TextInput name="name" type="text" placeholder="Nom" />
+                        </FormField>
+                        {errorMessage &&
+                            <Text color="status-error">{errorMessage}</Text>
+                        }
+                        <Box
+                            as="footer"
+                            gap="small"
+                            direction="row"
+                            align="center"
+                            justify="end"
+                            pad={{ top: 'medium', bottom: 'small' }}
+                        >
+                            <Button label="Annuler" onClick={onCancelAction} color="dark-3" />
+                            <Button
+                                label="Enregistrer"
+                                type="submit"
+                                disabled={loading}
+                                primary
+                            />
+                        </Box>
+                    </Form>
+                </Box>
+                {
+                    loading &&
+                    <LoadingLayer />
+                }
+            </Layer>
+        );
+    }
+}
+const WrappedSaveListLayer = withAPIService(SaveListLayer);
 
 
 class NewPick extends Component {
@@ -22,6 +104,8 @@ class NewPick extends Component {
         choices: [],
         choicesLists: undefined,
         itemsFieldKey: "empty",
+        itemsEdited: false,
+        showSaveListLayer: false
     }
 
     componentDidMount() {
@@ -74,7 +158,8 @@ class NewPick extends Component {
     }
 
     render() {
-        const { isError, errorMessage, loading, showFieldSuggest, choices, choicesLists, itemsFieldKey, multipleSelected } = this.state;
+        const { isError, errorMessage, loading, showFieldSuggest, choices, choicesLists, itemsFieldKey, multipleSelected, showSaveListLayer, itemsEdited } = this.state;
+        const { user } = this.props;
         return (
             <Box align="center">
                 <Heading level="3">Organiser un vote</Heading>
@@ -157,30 +242,44 @@ class NewPick extends Component {
                             <FormField
                                 name="choices" error={choices.length === 0 ? "Ce champ est requis" : ""}
                                 label={
-                                    <Box direction="row" align="center" justify="between">
+                                    <Box direction="row" align="center" justify="between" wrap>
                                         <Text>Choix possibles</Text>
-                                        {choicesLists &&
-                                            <Menu
-                                                dropProps={
-                                                    {
-                                                        align: { bottom: 'bottom', left: 'left' },
-                                                        elevation: "medium"
-                                                    }}
-                                                items={
-                                                    choicesLists.map(l => (
+                                        <Box direction="row" gap="xsmall" align="stretch" wrap>
+                                            {choicesLists &&
+                                                <Menu
+                                                    dropProps={
                                                         {
-                                                            label: <Box pad="small">
-                                                                <Text>{l.name}</Text>
-                                                            </Box>,
-                                                            onClick: () => {
-                                                                this.setState({ itemsFieldKey: "" + new Date().getTime(), choices: l.choices })
-                                                            }
-                                                        }))
-                                                }
-                                                icon={<NewWindow />}
-                                                label="Remplir à partir d'une liste prédéfinie"
-                                            >
-                                            </Menu>}
+                                                            align: { bottom: 'bottom', left: 'left' },
+                                                            elevation: "medium"
+                                                        }}
+                                                    items={
+                                                        choicesLists.map(l => (
+                                                            {
+                                                                label: <Box pad="small">
+                                                                    <Text>{l.name}</Text>
+                                                                </Box>,
+                                                                onClick: () => {
+                                                                    this.setState({ itemsFieldKey: "" + new Date().getTime(), choices: l.choices, itemsEdited: false })
+                                                                }
+                                                            }))
+                                                    }
+                                                    icon={<NewWindow />}
+                                                    label="Remplir à partir d'une liste prédéfinie"
+                                                    hoverIndicator
+                                                    size="small"
+                                                >
+                                                </Menu>
+                                            }
+                                            {choices.length > 0 &&
+                                                <Button plain
+                                                    icon={<CloudUpload />}
+                                                    label={<Text size="small">Enregistrer comme liste</Text>}
+                                                    focusIndicator={false}
+                                                    disabled={!itemsEdited}
+                                                    hoverIndicator onClick={() => { this.setState({ showSaveListLayer: true }) }}
+                                                    reverse />
+                                            }
+                                        </Box>
                                     </Box>
                                 }
                             >
@@ -188,7 +287,7 @@ class NewPick extends Component {
                                 <ItemsField
                                     key={itemsFieldKey}
                                     value={choices}
-                                    onChange={(val) => this.setState({ choices: val })} />
+                                    onChange={(val) => this.setState({ choices: val, itemsEdited: true })} />
 
                             </FormField>
 
@@ -205,7 +304,15 @@ class NewPick extends Component {
                     </Box>
                 </Box>
                 {
-                    loading && <LoadingLayer />
+                    showSaveListLayer &&
+                    <WrappedSaveListLayer
+                        user={user}
+                        choices={choices}
+                        onCancelAction={() => { this.setState({ showSaveListLayer: false }) }} />
+                }
+                {
+                    loading &&
+                    <LoadingLayer />
                 }
             </Box>
         )

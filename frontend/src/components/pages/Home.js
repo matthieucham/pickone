@@ -58,7 +58,7 @@ const Home = ({ user, onAnonymousLogin }) => {
                     }}>
                     <Text>- Quel resto pour ce midi ?</Text>
                     <Text>- Quel prénom pour le bébé ?</Text>
-                    <Text>- Sirop, Artichette, Grelotine ou Sloubi ?</Text>
+                    <Text>- A quoi on joue ? Sirop, artichette, grelotine ou sloubi ?</Text>
                     <Text>...</Text>
                     <Heading level="2">Cette appli va mettre tout le monde d'accord</Heading>
                     <Text textAlign="end" weight="bold">en décidant à votre place.</Text>
