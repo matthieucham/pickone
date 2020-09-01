@@ -302,7 +302,8 @@ class App extends Component {
 
 
   setApplicationUser = async (loggedInUser) => {
-    const idToken = await loggedInUser.getIdToken();
+    // force refresh
+    const idToken = await loggedInUser.getIdToken(true);
     await this.setState({
       authenticated: true,
       user: {

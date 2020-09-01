@@ -120,7 +120,7 @@ class ChoicesLists extends Component {
                                     }
                                     background="light-2">
                                     <Box direction="row" pad="xsmall" align="center" justify="between">
-                                        <Box direction="row-responsive" justify="start">
+                                        <Box direction="row" justify="start" wrap>
                                             {l.data.choices.map((ch, idx) => <Box key={`ap${l.id}_${idx}`} pad="xsmall"><Text size="small">{ch}</Text></Box>)}
                                         </Box>
                                         <Box direction="row" gap="small">
