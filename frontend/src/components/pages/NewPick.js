@@ -161,7 +161,7 @@ class NewPick extends Component {
         const { isError, errorMessage, loading, showFieldSuggest, choices, choicesLists, itemsFieldKey, multipleSelected, showSaveListLayer, itemsEdited } = this.state;
         const { user } = this.props;
         return (
-            <Box align="center">
+            <Box align="center" pad="small">
                 <Heading level="3">Organiser un vote</Heading>
                 <Box align="center" justify="center">
                     <Box width="large">

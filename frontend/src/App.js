@@ -268,7 +268,6 @@ const AppRoutes = ({ user, onDisplayNameChanged }) => {
         </Route>
         <Route exact path="/"><Home user={user} onAnonymousLogin={onDisplayNameChanged} /></Route>
       </Switch>
-      <Box height="small" fill="horizontal" />
     </Box>
   ) : (
       <Box flex align='center' justify='center'>
@@ -283,7 +282,6 @@ const AppRoutes = ({ user, onDisplayNameChanged }) => {
             <Redirect to="/login" />
           </Route>
         </Switch>
-        <Box height="small" fill="horizontal" />
       </Box>
     )
 }

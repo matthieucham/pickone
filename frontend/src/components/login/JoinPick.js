@@ -11,7 +11,8 @@ class EnterCodeLayer extends Component {
 
     state = {
         loading: false,
-        error: undefined
+        error: undefined,
+        codeValue: this.props.presetCode,
     }
 
     onSubmit = async ({ value }) => {
@@ -94,7 +95,12 @@ class EnterCodeLayer extends Component {
                             )
                         }
                         <FormField name="code" required label="Saisissez le code de partage que l'organisateur du vote vous aura communiqué :">
-                            <TextInput name="code" type="text" placeholder="Code de partage" />
+                            <TextInput
+                                name="code"
+                                type="text"
+                                placeholder="Code de partage"
+                                value={this.state.codeValue}
+                                onChange={(e) => this.setState({ codeValue: e.target.value })} />
                         </FormField>
                         {
                             error &&

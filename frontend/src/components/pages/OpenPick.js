@@ -1,14 +1,13 @@
 import React, { Component } from 'react';
 import dayjs from 'dayjs';
 import {
-    Box, Button, CheckBoxGroup, Distribution, Form, FormField, Heading, Menu, RadioButtonGroup, Text, TextInput
+    Box, Button, CheckBoxGroup, Distribution, Form, FormField, Heading, List, Menu, RadioButtonGroup, Text, TextInput
 } from 'grommet';
 import { Clear, InProgress, Scorecard, Trash } from 'grommet-icons';
 import { withRouter } from 'react-router-dom';
 
 import { withAPIService, withFirebaseService, withToast } from '../../hoc';
 import PickControlPanel from "../lib/PickControlPanel";
-import LabelAndValue from "../lib/LabelAndValue";
 import PickCodeDisplay from "../lib/PickCodeDisplay";
 import ConfirmationLayer from "../lib/ConfirmationLayer";
 import LoadingLayer from "../lib/LoadingLayer";
@@ -22,14 +21,14 @@ const VotersBox = ({ userId, voters, hideAction, onCancel, ...props }) => {
         setOpenConfirm(undefined);
         onCancel(clickedVoter);
     }
-    let summaryLabel;
-    if (voters && voters.length > 1) {
-        summaryLabel = `${voters.length} votants`;
-    } else if (voters && voters.length === 1) {
-        summaryLabel = `${voters.length} votant`;
-    } else {
-        summaryLabel = `Aucun votant`;
-    }
+    let summaryLabel = voters.length;
+    // if (voters && voters.length > 1) {
+    //     summaryLabel = `${voters.length} votants`;
+    // } else if (voters && voters.length === 1) {
+    //     summaryLabel = `${voters.length} votant`;
+    // } else {
+    //     summaryLabel = `Aucun votant`;
+    // }
     const hasVoters = (voters && voters.length > 0);
     let votersItems = [];
     if (hasVoters) {
@@ -43,11 +42,10 @@ const VotersBox = ({ userId, voters, hideAction, onCancel, ...props }) => {
             }
         });
     }
-    return <Box align="center" justify="center" background="light-2" {...props} >
+    return <Box align="center" justify="center" {...props} >
         <Menu dropProps={{
             align: { top: 'bottom', left: 'left' },
             elevation: 'medium',
-            round: "small"
         }}
             label={<Text weight="bold">{summaryLabel}</Text>}
             items={votersItems}
@@ -324,57 +322,80 @@ class OpenPick extends Component {
                 pick.result ? "Terminé" : "En cours"
             )
         }
+
         return (
             <Box align="center" fill="horizontal">
                 {pickFound && (
-                    <Box align="center" fill="horizontal">
-                        <Heading level="4">{pick.title}</Heading>
-                        <Box pad="small"><Text>{pick.description}</Text></Box>
-                        {!pick.cancelled && !pick.result &&
-                            <Box direction="row-responsive" justify="between" gap="medium">
-                                <Box justify="center" align="center">
-                                    <PickCodeDisplay code={pick.key} border round="xsmall" background="dark-2" />
-                                </Box>
+                    <Box fill="horizontal">
+                        <Box direction="row-reverse" wrap justify="between" gap="small">
+                            <Box align="center" flex={{ grow: 1, shrink: 0 }} pad="small">
+                                <Heading level="3">{pick.title}</Heading>
+                                <Box pad="small"><Text>{pick.description}</Text></Box>
+                                {
+                                    !pick.result && !pick.cancelled &&
+                                    <OpenPickForm choices={pick.choices} values={vote.choices || []} suggest={pick.suggest} multiple={pick.multiple} onSubmit={this.onChoicesSubmitted} />
+                                }
+                                {
+                                    pick.cancelled &&
+                                    <Box justify="center">
+                                        <Text weight="bold">Vote annulé par l'organisateur</Text>
+                                        <Text size="small">Parce que la démocratie, c'est très surfait</Text>
+                                    </Box>
+                                }
+                                {
+                                    pick.result && !pick.cancelled &&
+                                    <ResultPanel winner={pick.result.winner} scores={pick.result.scores} />
+                                }
+                            </Box>
 
+                            <Box align="center" flex={{ grow: 0, shrink: 0 }} pad="small">
+                                {!pick.cancelled && !pick.result &&
+                                    <PickCodeDisplay code={pick.key} background="dark-2" />
+                                }
+                                <List primaryKey={
+                                    (item) => <Text key={item.key}>{item.label}</Text>
+                                }
+                                    secondaryKey={
+                                        (item) => {
+                                            if (item.content) {
+                                                return item.content
+                                            } else {
+                                                if (item.color) {
+                                                    return <Text key={"sk" + item.key} weight="bold" color={item.color}>{item.value}</Text>
+                                                } else {
+                                                    return <Text key={"sk" + item.key} weight="bold">{item.value}</Text>
+                                                }
+                                            }
+                                        }
+                                    }
+                                    data={
+                                        [
+                                            { key: "status", label: "Statut", value: status.label, color: status.color },
+                                            { key: "date", label: "Date", value: dayjs.unix(pick.dateCreated.seconds).format('DD/MM/YYYY') },
+                                            { key: "orga", label: "Organisateur", value: pick.author.name },
+                                            { key: "mode", label: "Mode d'élection", value: pick.mode === "random" ? "Au hasard" : "A la majorité" },
+                                            {
+                                                key: "voters", label: "Votants", content: <VotersBox key="vbvoters" userId={this.props.user.id}
+                                                    voters={pick.voters}
+                                                    onCancel={isOrga ? this.cancelVote : undefined}
+                                                    hideAction={pick.result || pick.cancelled} />
+                                            },
+                                        ]
+                                    }
+                                    margin="small"
+                                />
                                 {
                                     isOrga &&
                                     <PickControlPanel
                                         border round="xsmall" elevation="small"
+                                        margin="small"
                                         pick={pick}
                                         onClosePick={this.terminate}
                                         onCancelPick={this.cancel} />
                                 }
                             </Box>
-                        }
-                        <Box pad="small" direction="row" wrap>
-                            <LabelAndValue label="Statut" value={status.label} background={status.color} icon={status.icon} border round="xsmall" margin="small" />
-                            <LabelAndValue label="Date" value={dayjs.unix(pick.dateCreated.seconds).format('DD/MM/YYYY')} border round="xsmall" margin="small" />
-                            <LabelAndValue label="Organisateur" value={pick.author.name} border round="xsmall" margin="small" />
-                            <LabelAndValue label="Mode d'élection" value={pick.mode === "random" ? "Au hasard" : "A la majorité"} border round="xsmall" margin="small" />
-                            <VotersBox userId={this.props.user.id}
-                                voters={pick.voters}
-                                onCancel={isOrga ? this.cancelVote : undefined}
-                                hideAction={pick.result || pick.cancelled}
-                                border round="xsmall"
-                                margin="small" />
+
                         </Box>
-
-                        {
-                            !pick.result && !pick.cancelled &&
-                            <OpenPickForm choices={pick.choices} values={vote.choices || []} suggest={pick.suggest} multiple={pick.multiple} onSubmit={this.onChoicesSubmitted} />
-                        }
-                        {
-                            pick.cancelled &&
-                            <Box justify="center">
-                                <Text weight="bold">Vote annulé par l'organisateur</Text>
-                                <Text size="small">Parce que la démocratie, c'est très surfait</Text>
-                            </Box>
-                        }
-                        {
-                            pick.result && !pick.cancelled &&
-                            <ResultPanel winner={pick.result.winner} scores={pick.result.scores} />
-                        }
-
                     </Box>
                 )}
                 {

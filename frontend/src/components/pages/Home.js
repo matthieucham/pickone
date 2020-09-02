@@ -1,13 +1,25 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Button, Header, Heading, Text } from 'grommet';
 import { Chat } from "grommet-icons";
+import qs from "qs";
+import { useLocation } from "react-router-dom";
 
 import JoinPick from "../login/JoinPick";
 import backgroundImg from "../../assets/lavalamps.jpg";
 
 const Home = ({ user, onAnonymousLogin }) => {
+    let location = useLocation();
     const [openCodeDialog, setOpenCodeDialog] = useState(false);
     const [showCookieBanner, setShowCookieBanner] = useState(true);
+    const [presetCode, setPresetCode] = useState(undefined);
+    useEffect(() => {
+        const codeParam = qs.parse(location.search, { ignoreQueryPrefix: true }).__sharing_code;
+        if (codeParam) {
+            setOpenCodeDialog(true);
+            setPresetCode(codeParam);
+        }
+    }, [location]);
+
     return (
         <Box fill="horizontal">
             {showCookieBanner && <Header pad="small" background="neutral-2">
@@ -89,6 +101,7 @@ const Home = ({ user, onAnonymousLogin }) => {
                 {
                     openCodeDialog &&
                     <JoinPick user={user}
+                        presetCode={presetCode}
                         onClose={() => setOpenCodeDialog(false)}
                         onAnonymousLogin={onAnonymousLogin} />
                 }
