@@ -21,7 +21,7 @@ const VotersBox = ({ userId, voters, hideAction, onCancel, ...props }) => {
         setOpenConfirm(undefined);
         onCancel(clickedVoter);
     }
-    let summaryLabel = voters.length;
+    let summaryLabel = voters ? voters.length : 0;
     // if (voters && voters.length > 1) {
     //     summaryLabel = `${voters.length} votants`;
     // } else if (voters && voters.length === 1) {

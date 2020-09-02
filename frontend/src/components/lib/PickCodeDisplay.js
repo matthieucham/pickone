@@ -36,7 +36,7 @@ const PickCodeDisplay = ({ code, ...props }) => {
                 }
                 action={(item, index) => {
                     return (
-                        <Box justify="center" align="center">
+                        <Box key={"act" + item.key} justify="center" align="center">
                             <Stack anchor="bottom-right">
                                 <Button plain
                                     key={index}
