@@ -4,53 +4,21 @@ import {
 } from 'grommet';
 //import firebase from 'firebase/app';
 import { withFirebaseService } from '../../hoc';
-import SocialNetworks from '../login/SocialNetworks';
+import SocialNetworks from './SocialNetworks';
 import LoadingLayer from "../lib/LoadingLayer";
 import { Link } from 'react-router-dom';
 
+import { connect } from "react-redux";
+import { signIn } from "../../store/actions/authActions";
 
 class Login extends Component {
 
-    state = {
-        isError: false,
-        errorMessage: '',
-        loading: false
-    }
-
     handleSubmit = async ({ value }) => {
-
-        await this.setState({
-            isError: false,
-            errorMessage: '',
-            loading: true
-        });
-        try {
-            if (!this.props.user) {
-                await this.props.FirebaseService.getAuth().signInWithEmailAndPassword(value.email, value.password);
-                // } else if (this.props.user.anonymous) {
-                //     const credential = firebase.auth.EmailAuthProvider.credential(value.email, value.password);
-                //     const usercred = await this.props.FirebaseService.getAuth().currentUser.linkWithCredential(credential);
-                //     if (this.props.onDisplayNameChanged) {
-                //         this.props.onDisplayNameChanged(usercred.user.displayName, true);
-                //     }
-            }
-            await this.setState({
-                errorMessage: "",
-                isError: false,
-                loading: false
-            });
-        } catch (error) {
-            await this.setState({
-                errorMessage: error.message,
-                isError: true,
-                loading: false
-            });
-        }
-
+        this.props.signIn(value);
     }
 
     render() {
-        const { isError, errorMessage, loading } = this.state;
+        const { loading, errorMessage } = this.props;
         return (
             <Box align="center" pad="small">
                 <Heading level="3">Login</Heading>
@@ -68,7 +36,7 @@ class Login extends Component {
                                 <TextInput name="password" type="password" />
                             </FormField>
 
-                            {isError && (
+                            {errorMessage && (
                                 <Box pad={{ horizontal: 'small' }}>
                                     <Text color="status-error">{errorMessage}</Text>
                                 </Box>
@@ -96,6 +64,18 @@ class Login extends Component {
     }
 }
 
-const WrappedComponent = withFirebaseService(Login);
+const mapStateToProps = (state) => {
+    return {
+        loading: state.ui.fetching,
+        errorMessage: state.auth.authError
+    }
+}
 
-export default WrappedComponent;
+const mapDispatchToProps = (dispatch) => {
+    return {
+        signIn: (creds) => dispatch(signIn(creds))
+    }
+}
+
+const WrappedComponent = withFirebaseService(Login);
+export default connect(mapStateToProps, mapDispatchToProps)(WrappedComponent);

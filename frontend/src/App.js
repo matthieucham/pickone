@@ -1,8 +1,6 @@
-import React, { Component, useState } from 'react';
-import { withRouter, Redirect, Route, Switch, useHistory } from 'react-router-dom';
+import React, { Component } from 'react';
+import { withRouter, Redirect, Route, Switch } from 'react-router-dom';
 import { ToastProvider } from 'react-toast-notifications';
-//mport customTheme from "./theme/Light.json";
-//import { customTheme } from "./theme/Light";
 
 import {
   Anchor,
@@ -13,10 +11,9 @@ import {
   Header,
   Layer,
   ResponsiveContext,
-  Sidebar,
   Text
 } from 'grommet';
-import { Chat, CircleInformation, FormClose, Menu, Notification, User } from 'grommet-icons';
+import { Chat, Menu, Notification } from 'grommet-icons';
 
 /* Load local files */
 import { withAPIService, withFirebaseService, withToast } from './hoc';
@@ -26,7 +23,7 @@ import PushMessageToast from './components/lib/PushMessageToast';
 
 import { RouterAnchor } from "./components/ext/RoutedControls";
 
-import Login from './components/pages/Login';
+import Login from './components/login/Login';
 import Register from './components/pages/Register';
 import NewPick from './components/pages/NewPick';
 import Dashboard from './components/pages/Dashboard';
@@ -34,9 +31,11 @@ import OpenPick from './components/pages/OpenPick';
 import Home from './components/pages/Home';
 import ChoicesLists from './components/pages/ChoicesLists';
 import EditList from './components/pages/EditList';
-import JoinPick from './components/login/JoinPick';
 import About from './components/pages/About';
+import AppSidebar from './components/pages/Sidebar';
 
+
+import { connect } from "react-redux";
 
 
 const theme = {
@@ -116,125 +115,8 @@ class PushMessageNotifier extends Component {
 
 const DecoratedPushMessageNotifier = withToast(withFirebaseService(PushMessageNotifier));
 
-const AppSidebar = ({ user, onCloseButtonClick, onLogout, onAnonymousLogin, ...props }) => {
-  const history = useHistory();
-  const [openCodeDialog, setOpenCodeDialog] = useState(false);
-  const isLoggedIn = user && !user.anonymous;
-  const menuLinks = [
-    { label: "Accueil", path: "/" },
-    { label: "Rejoindre un vote", onClick: () => setOpenCodeDialog(true) }
-  ];
-  if (user) {
-    menuLinks.push({ label: "Mes votes", path: "/dashboard" });
-  }
-  if (isLoggedIn) {
-    menuLinks.push({ label: "Nouveau vote", path: "/newpick" }, { label: "Mes listes", path: "/lists" });
-  }
-  return (
-    <Sidebar width="medium" background="brand" pad="xsmall"
-      footer=
-      {
-        <Button hoverIndicator onClick={() => { history.push("/about"); onCloseButtonClick() }}>
-          <Box pad={{ horizontal: "medium", vertical: "small" }} align="end">
-            <Text weight="bold">A propos</Text>
-          </Box>
-        </Button>
-      }
-      {...props}
-    >
-      <Header justify="end">
-        <Button icon={<FormClose color="light-1" />}
-          onClick={onCloseButtonClick}
-          pad="xsmall" />
-      </Header>
-      <Box>
-        <Box>
-          {menuLinks.map((ml) => (
-            <Box border="bottom" key={`menu${ml.label.replace(" ", "_")}`}>
-              <Button
-                hoverIndicator
-                onClick={() => {
-                  if (ml.onClick) {
-                    ml.onClick();
-                  }
-                  if (ml.path) {
-                    history.push(ml.path);
-                  }
-                  onCloseButtonClick()
-                }
-                }>
-                <Box pad={{ horizontal: "medium", vertical: "small" }} align="start">
-                  <Text weight="bold">{ml.label}</Text>
-                </Box>
-              </Button>
-            </Box>
-          ))}
-        </Box>
-        <Box margin={{ vertical: "large", horizontal: "none" }}>
-          {
-            isLoggedIn ? (
-              <Box border="bottom">
-                <Button hoverIndicator onClick={onLogout}>
-                  <Box pad={{ horizontal: "medium", vertical: "small" }} align="start">
-                    <Text weight="bold" color="accent-1">Déconnexion</Text>
-                  </Box>
-                </Button>
-              </Box>
-            ) : (
-                user ? (
-                  <Box>
-                    <Box border="bottom">
-                      <Button hoverIndicator onClick={() => { history.push("/register"); onCloseButtonClick() }}>
-                        <Box pad={{ horizontal: "medium", vertical: "small" }} align="start">
-                          <Text weight="bold" color="accent-1">Créer un compte</Text>
-                        </Box>
-                      </Button>
-                    </Box>
-                    <Box direction="row" align="center" justify="center">
-                      <Box pad="xsmall">
-                        <CircleInformation />
-                      </Box>
-                      <Box pad="xsmall" flex>
-                        <Text size="small">Avec un compte vous pourrez organiser des votes</Text>
-                      </Box>
-                    </Box>
-                  </Box>
-                ) : (
-                    <Box border="bottom">
-                      <Button hoverIndicator onClick={() => { history.push("/login"); onCloseButtonClick() }}>
-                        <Box pad={{ horizontal: "medium", vertical: "small" }} align="start">
-                          <Text weight="bold" color="accent-1">Se connecter</Text>
-                        </Box>
-                      </Button>
-                    </Box>
 
-                  )
-              )
-          }
-          {user &&
-            <Box direction="row" align="center" justify="center">
-              <Box pad="xsmall">
-                <User />
-              </Box>
-              <Box direction="row" pad="xsmall" flex align="center" gap="xsmall">
-                <Text weight="bold">{user.displayName}</Text>
-                {
-                  user.anonymous &&
-                  <Button plain icon={<FormClose />} label="(invité)" onClick={onLogout} hoverIndicator pad="xsmall" reverse />
-                }
-              </Box>
-            </Box>}
-        </Box>
-      </Box>
-      {
-        openCodeDialog &&
-        <JoinPick user={user}
-          onClose={() => setOpenCodeDialog(false)}
-          onAnonymousLogin={onAnonymousLogin} />
-      }
-    </Sidebar>
-  )
-}
+const WrappedOpenPick = withRouter(OpenPick);
 
 const AppRoutes = ({ user, onDisplayNameChanged }) => {
   return (user) ? (
@@ -261,7 +143,7 @@ const AppRoutes = ({ user, onDisplayNameChanged }) => {
           <NewPick user={user} />
         </Route>
         <Route exact path="/pick/:id">
-          <OpenPick user={user} />
+          <WrappedOpenPick user={user} />
         </Route>
         <Route exact path="/about">
           <About />
@@ -369,16 +251,16 @@ class App extends Component {
     }
   }
 
-  signOut = async () => {
-    await this.setState({ loading: true });
-    await this.props.FirebaseService.getAuth().signOut();
-    await this.reset();
-  }
+  // signOut = async () => {
+  //   await this.setState({ loading: true });
+  //   await this.props.FirebaseService.getAuth().signOut();
+  //   await this.reset();
+  // }
 
-  reset = async () => {
-    await this.setState(initialState);
-    await this.setState({ loading: false });
-  }
+  // reset = async () => {
+  //   await this.setState(initialState);
+  //   await this.setState({ loading: false });
+  // }
 
   onDisplayNameChanged = (displayName, notanonymous) => {
     let user = { ...this.state.user }
@@ -425,14 +307,13 @@ class App extends Component {
                   <AppSidebar
                     user={user}
                     onCloseButtonClick={() => this.setState({ showSidebar: false })}
-                    onLogout={this.signOut} />
+                    onAnonymousLogin={this.onDisplayNameChanged} />
                 </Collapsible>
               ) : (
                   <Layer>
                     <AppSidebar
                       user={user}
                       onCloseButtonClick={() => this.setState({ showSidebar: false })}
-                      onLogout={this.signOut}
                       onAnonymousLogin={this.onDisplayNameChanged}
                       fill />
                   </Layer>
@@ -446,6 +327,13 @@ class App extends Component {
   }
 }
 
+const mapStateToProps = (state) => {
+  console.log(state)
+  return {
+
+  }
+}
+
 const WrappedComponent = withRouter(withAPIService(withFirebaseService(App)));
 
-export default WrappedComponent;
+export default connect(mapStateToProps)(WrappedComponent);

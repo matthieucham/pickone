@@ -13,6 +13,11 @@ import ConfirmationLayer from "../lib/ConfirmationLayer";
 import LoadingLayer from "../lib/LoadingLayer";
 
 
+import { connect } from "react-redux";
+import { firestoreConnect } from "react-redux-firebase";
+import { compose } from "redux";
+
+
 const VotersBox = ({ userId, voters, hideAction, onCancel, ...props }) => {
     const [openConfirm, setOpenConfirm] = React.useState();
     const [clickedVoter, setClickedVoter] = React.useState();
@@ -110,7 +115,7 @@ const ResultPanel = ({ winner, scores }) => {
                 <Heading level="3">{winner}</Heading>
             </Box>
         </Box>
-        <Box width="large" align="center"
+        <Box width="large" align="center" height="large"
             animation={{
                 type: "fadeIn",
                 delay: 0,
@@ -312,6 +317,7 @@ class OpenPick extends Component {
     }
 
     render() {
+        console.log(this.props);
         const { pick, pickFound, vote, loading, isOrga } = this.state;
         const status = {
             color: pick.cancelled ? "status-warning" : (
@@ -385,7 +391,7 @@ class OpenPick extends Component {
                                     margin="small"
                                 />
                                 {
-                                    isOrga &&
+                                    isOrga && !pick.result && !pick.cancelled &&
                                     <PickControlPanel
                                         border round="xsmall" elevation="small"
                                         margin="small"
@@ -407,5 +413,19 @@ class OpenPick extends Component {
     }
 }
 
+const mapStateToProps = (state, ownProps) => {
+    // console.log(state);
+    const id = ownProps.match.params.id;
+    const picks = state.firestore.data.picks;
+    const pick = picks ? picks[id] : null;
+    return {
+        pick: pick
+    }
+}
 const WrappedComponent = withRouter(withFirebaseService(withAPIService(withToast(OpenPick))));
-export default WrappedComponent;
+export default compose(
+    connect(mapStateToProps),
+    firestoreConnect((props) => [
+        { collection: "picks", doc: props.match.params.id }
+    ])
+)(WrappedComponent);

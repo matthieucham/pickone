@@ -9,6 +9,9 @@ import { withAPIService, withFirebaseService } from '../../hoc';
 import ItemsField from '../fields/ItemsField';
 import LoadingLayer from "../lib/LoadingLayer";
 
+import { createPick } from "../../store/actions/pickActions";
+import { connect } from "react-redux";
+
 
 class SaveListLayer extends Component {
 
@@ -126,6 +129,8 @@ class NewPick extends Component {
     }
 
     handleSubmit = async ({ value }) => {
+
+        this.props.createPick({ ...value, choices: this.state.choices });
 
         await this.setState({
             isError: false,
@@ -320,4 +325,11 @@ class NewPick extends Component {
 }
 
 const WrappedComponent = withRouter(withAPIService(withFirebaseService(NewPick)));
-export default WrappedComponent;
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        createPick: (pick) => dispatch(createPick(pick))
+    }
+}
+
+export default connect(null, mapDispatchToProps)(WrappedComponent);

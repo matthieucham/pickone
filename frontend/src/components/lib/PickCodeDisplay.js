@@ -22,7 +22,7 @@ const PickCodeDisplay = ({ code, ...props }) => {
     const url = document.createElement('a');
     //  Set href to any path
     url.setAttribute('href', window.location.href);
-    const sharingCodeUrl = url.protocol + '://' + url.hostname + (url.port ? ':' + url.port : '') + '/?__sharing_code=' + code;
+    const sharingCodeUrl = url.protocol + '//' + url.hostname + (url.port ? ':' + url.port : '') + '/?__sharing_code=' + code;
     return (
 
         <Box {...props}>

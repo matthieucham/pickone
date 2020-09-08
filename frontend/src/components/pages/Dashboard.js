@@ -8,6 +8,12 @@ import { AddCircle, StatusDisabled, StatusInfo, StatusUnknown, User } from 'grom
 import { withFirebaseService } from '../../hoc';
 import { withRouter } from 'react-router-dom';
 
+import { connect } from "react-redux";
+import { firestoreConnect } from "react-redux-firebase";
+import { compose } from "redux";
+
+import RegistrationsList from "../picks/RegistrationsList";
+
 class Dashboard extends Component {
 
     state = {
@@ -37,11 +43,14 @@ class Dashboard extends Component {
 
     render() {
         const { picks } = this.state;
-        const { user } = this.props;
+        const { user, registrations } = this.props;
         return (
             <Box align="center">
                 <Box pad="medium" width="medium" align="center">
                     <Button label="Nouveau vote" icon={<AddCircle />} onClick={() => { this.props.history.push("/newpick") }} />
+                </Box>
+                <Box>
+                    <RegistrationsList registrations={registrations} />
                 </Box>
 
                 <Box direction="row" gap="small" align="center" justify="start" wrap>
@@ -109,5 +118,18 @@ class Dashboard extends Component {
     }
 }
 
+const mapStateToProps = (state) => {
+    console.log(state);
+    return {
+        registrations: state.firestore.ordered.registrations
+    }
+
+}
+
 const WrappedComponent = withFirebaseService(withRouter(Dashboard));
-export default WrappedComponent;
+export default compose(
+    connect(mapStateToProps),
+    firestoreConnect([
+        { collection: "registrations" }
+    ])
+)(WrappedComponent);
