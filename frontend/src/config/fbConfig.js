@@ -19,4 +19,26 @@ var config = {
 }
 firebase.initializeApp(config);
 
+export const backendAPIEndpoint = config.backendAPI;
+
+const messaging = firebase.messaging();
+const analytics = firebase.analytics();
+
+export const getMessagingToken = () => new Promise((resolve, reject) => {
+    messaging.getToken({ vapidKey: config.vapidKey })
+        .then((firebaseToken) => {
+            resolve(firebaseToken);
+        })
+        .catch((err) => {
+            reject(err);
+        });
+});
+
+export const onMessageListener = () =>
+    new Promise((resolve) => {
+        messaging.onMessage((payload) => {
+            resolve(payload);
+        });
+    });
+
 export default firebase;

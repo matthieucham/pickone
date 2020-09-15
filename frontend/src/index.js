@@ -4,18 +4,22 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 import { applyMiddleware, compose, createStore } from "redux";
-import { Provider } from "react-redux";
+import { Provider, useSelector } from "react-redux";
 import thunk from "redux-thunk";
-import { createFirestoreInstance, reduxFirestore, getFirestore } from "redux-firestore";
-import { ReactReduxFirebaseProvider, getFirebase } from "react-redux-firebase";
-import fbConfig from "./config/fbConfig";
+import { createFirestoreInstance, reduxFirestore, getFirestore, actionTypes } from "redux-firestore";
+import { ReactReduxFirebaseProvider, getFirebase, isLoaded } from "react-redux-firebase";
+
+import fbConfig, { backendAPIEndpoint, getMessagingToken } from "./config/fbConfig";
 import firebase from "firebase/app";
 import { APIService } from "./service";
-
+import LoadingLayer from "./components/lib/LoadingLayer"
 
 import rootReducer from "./store/reducers/rootReducer";
+import { sendToken } from "./store/actions/messagingActions";
 
-const getAPIService = () => (new APIService(fbConfig.backendAPI));
+const getAPIService = () => {
+  return new APIService(backendAPIEndpoint);
+};
 
 const store = createStore(rootReducer,
   compose(
@@ -24,19 +28,42 @@ const store = createStore(rootReducer,
   )
 );
 
+const rrfConfig = {
+  onAuthStateChanged: (authData, firebase, dispatch) => {
+    // Clear redux-firestore state if auth does not exist (i.e logout)
+    if (!authData) {
+      dispatch({ type: actionTypes.CLEAR_DATA })
+      dispatch("DISABLE_PUSH_MESSAGING");
+    } else {
+      // "new" user : setup push messaging
+      getMessagingToken().then(
+        (token) => dispatch(sendToken(token))
+      );
+    }
+  }
+}
+
 const rrfProps = {
   firebase,
-  config: fbConfig,
+  config: rrfConfig,
   dispatch: store.dispatch,
   createFirestoreInstance
 };
+
+function AuthIsLoaded({ children }) {
+  const auth = useSelector(state => state.firebase.auth)
+  if (!isLoaded(auth)) return <LoadingLayer />;
+  return children
+}
 
 ReactDOM.render(
   <React.StrictMode>
     <Provider store={store}>
       <ReactReduxFirebaseProvider {...rrfProps}>
         <BrowserRouter>
-          <App />
+          <AuthIsLoaded>
+            <App />
+          </AuthIsLoaded>
         </BrowserRouter>
       </ReactReduxFirebaseProvider>
     </Provider>

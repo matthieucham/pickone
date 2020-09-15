@@ -12,7 +12,7 @@ const theme = {
     },
 };
 
-const PushMessageToast = ({ appearance, children, onDismiss }) => (
+const PushMessageToast = ({ appearance, children, closeToast }) => (
     <Grommet theme={theme}>
         <Box
             align="center"
@@ -34,7 +34,7 @@ const PushMessageToast = ({ appearance, children, onDismiss }) => (
                     icon={<FormClose color={appearance !== "warning" ? "white" : "dark-1"} />}
                     plain
                     focusIndicator={false}
-                    onClick={onDismiss} />
+                    onClick={closeToast} />
             </Box>
         </Box>
     </Grommet>

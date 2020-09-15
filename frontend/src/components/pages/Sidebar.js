@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useHistory } from 'react-router-dom';
 
 import {
@@ -10,24 +10,27 @@ import {
 } from 'grommet';
 import { CircleInformation, FormClose, User } from 'grommet-icons';
 
-import JoinPick from '../login/JoinPick';
+import JoinPick from './JoinPick';
 
 import { connect } from "react-redux";
 import { signOut } from "../../store/actions/authActions";
+import { showJoinPickModal } from "../../store/actions/uiActions";
 
 
-const AppSidebar = ({ user, onCloseButtonClick, onAnonymousLogin, signOut, ...props }) => {
+const AppSidebar = ({ onCloseButtonClick, onAnonymousLogin, auth, anonymousDisplayName, signOut, showJoinPick, showJoinPickModal, ...props }) => {
+    const isSignedIn = auth.uid;
+    const isAnonymous = auth.isAnonymous;
+    const isIdentified = isSignedIn && !isAnonymous;
+
     const history = useHistory();
-    const [openCodeDialog, setOpenCodeDialog] = useState(false);
-    const isLoggedIn = user && !user.anonymous;
     const menuLinks = [
         { label: "Accueil", path: "/" },
-        { label: "Rejoindre un vote", onClick: () => setOpenCodeDialog(true) }
+        { label: "Rejoindre un vote", onClick: () => showJoinPickModal(true) }
     ];
-    if (user) {
+    if (isSignedIn) {
         menuLinks.push({ label: "Mes votes", path: "/dashboard" });
     }
-    if (isLoggedIn) {
+    if (isIdentified) {
         menuLinks.push({ label: "Nouveau vote", path: "/newpick" }, { label: "Mes listes", path: "/lists" });
     }
     return (
@@ -72,7 +75,7 @@ const AppSidebar = ({ user, onCloseButtonClick, onAnonymousLogin, signOut, ...pr
                 </Box>
                 <Box margin={{ vertical: "large", horizontal: "none" }}>
                     {
-                        isLoggedIn ? (
+                        isIdentified ? (
                             <Box border="bottom">
                                 <Button hoverIndicator onClick={signOut}>
                                     <Box pad={{ horizontal: "medium", vertical: "small" }} align="start">
@@ -81,7 +84,7 @@ const AppSidebar = ({ user, onCloseButtonClick, onAnonymousLogin, signOut, ...pr
                                 </Button>
                             </Box>
                         ) : (
-                                user ? (
+                                isSignedIn ? (
                                     <Box>
                                         <Box border="bottom">
                                             <Button hoverIndicator onClick={() => { history.push("/register"); onCloseButtonClick() }}>
@@ -111,15 +114,15 @@ const AppSidebar = ({ user, onCloseButtonClick, onAnonymousLogin, signOut, ...pr
                                     )
                             )
                     }
-                    {user &&
+                    {isSignedIn &&
                         <Box direction="row" align="center" justify="center">
                             <Box pad="xsmall">
                                 <User />
                             </Box>
                             <Box direction="row" pad="xsmall" flex align="center" gap="xsmall">
-                                <Text weight="bold">{user.displayName}</Text>
+                                <Text weight="bold">{auth.displayName ? auth.displayName : anonymousDisplayName}</Text>
                                 {
-                                    user.anonymous &&
+                                    isAnonymous &&
                                     <Button plain icon={<FormClose />} label="(invité)" onClick={signOut} hoverIndicator pad="xsmall" reverse />
                                 }
                             </Box>
@@ -127,19 +130,27 @@ const AppSidebar = ({ user, onCloseButtonClick, onAnonymousLogin, signOut, ...pr
                 </Box>
             </Box>
             {
-                openCodeDialog &&
-                <JoinPick user={user}
-                    onClose={() => setOpenCodeDialog(false)}
-                    onAnonymousLogin={onAnonymousLogin} />
+                showJoinPick &&
+                <JoinPick
+                    onClose={() => showJoinPickModal(false)} />
             }
         </Sidebar>
     )
 }
 
-const mapDispatchToProps = (dispatch) => {
+const mapStateToProps = (state) => {
     return {
-        signOut: () => dispatch(signOut())
+        auth: state.firebase.auth,
+        anonymousDisplayName: state.auth.anonymousDisplayName,
+        showJoinPick: state.ui.showJoinPick
     }
 }
 
-export default connect(null, mapDispatchToProps)(AppSidebar);
+const mapDispatchToProps = (dispatch) => {
+    return {
+        signOut: () => dispatch(signOut()),
+        showJoinPickModal: (show) => dispatch(showJoinPickModal(show))
+    }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(AppSidebar);

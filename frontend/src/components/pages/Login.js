@@ -2,10 +2,7 @@ import React, { Component } from 'react';
 import {
     Box, Button, Form, FormField, Heading, Text, TextInput
 } from 'grommet';
-//import firebase from 'firebase/app';
-import { withFirebaseService } from '../../hoc';
-import SocialNetworks from './SocialNetworks';
-import LoadingLayer from "../lib/LoadingLayer";
+import SocialNetworks from '../login/SocialNetworks';
 import { Link } from 'react-router-dom';
 
 import { connect } from "react-redux";
@@ -13,12 +10,12 @@ import { signIn } from "../../store/actions/authActions";
 
 class Login extends Component {
 
-    handleSubmit = async ({ value }) => {
+    handleSubmit = ({ value }) => {
         this.props.signIn(value);
     }
 
     render() {
-        const { loading, errorMessage } = this.props;
+        const { errorMessage, loading } = this.props;
         return (
             <Box align="center" pad="small">
                 <Heading level="3">Login</Heading>
@@ -56,9 +53,6 @@ class Login extends Component {
                         <SocialNetworks />
                     </Box>
                 </Box>
-                {
-                    loading && <LoadingLayer />
-                }
             </Box>
         )
     }
@@ -77,5 +71,4 @@ const mapDispatchToProps = (dispatch) => {
     }
 }
 
-const WrappedComponent = withFirebaseService(Login);
-export default connect(mapStateToProps, mapDispatchToProps)(WrappedComponent);
+export default connect(mapStateToProps, mapDispatchToProps)(Login);

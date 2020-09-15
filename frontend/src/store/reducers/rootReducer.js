@@ -6,13 +6,14 @@ import { combineReducers } from "redux";
 import { firestoreReducer } from "redux-firestore";
 import { firebaseReducer } from "react-redux-firebase";
 
+
 const rootReducer = combineReducers({
     auth: authReducer,
     list: listReducer,
     pick: pickReducer,
     ui: uiReducer,
     firestore: firestoreReducer,
-    firebase: firebaseReducer
+    firebase: firebaseReducer,
 })
 
 export default rootReducer;

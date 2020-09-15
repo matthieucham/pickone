@@ -1,76 +1,25 @@
 import React, { Component } from 'react';
 import { Box, Button, Form, FormField, Header, Heading, Layer, Text, TextInput } from 'grommet';
 import { CircleInformation, FormClose, User } from "grommet-icons";
-import { withRouter } from 'react-router-dom';
+import { withRouter } from "react-router-dom";
 
 import { RouterAnchor } from "../ext/RoutedControls";
-import LoadingLayer from "../lib/LoadingLayer";
-import { withFirebaseService, withAPIService } from '../../hoc';
+import { compose } from "redux";
+import { connect } from "react-redux";
+import { joinPick } from "../../store/actions/pickActions";
 
 class EnterCodeLayer extends Component {
 
     state = {
-        loading: false,
-        error: undefined,
-        codeValue: this.props.presetCode,
+        codeValue: this.props.presetCode || "",
     }
 
-    onSubmit = async ({ value }) => {
-        await this.setState({
-            error: "",
-            loading: true,
-        });
-
-        let userIdToken;
-        if (this.props.user) {
-            userIdToken = this.props.user.idToken;
-        } else {
-            // Anonymous login
-            try {
-                const result = await this.props.FirebaseService.getAuth().signInAnonymously();
-                await result.user.updateProfile({ displayName: value.name });
-                userIdToken = await result.user.getIdToken();
-            } catch (error) {
-                await this.setState({
-                    error: error.message,
-                    loading: false
-                });
-                return;
-            }
-            if (this.props.onAnonymousLogin) {
-                this.props.onAnonymousLogin(value.name);
-            }
-        }
-
-        try {
-            const response = await this.props.APIService.callAPIWithAuth(
-                `picks/registrations/`,
-                userIdToken,
-                {
-                    method: 'POST',
-                    body: JSON.stringify({ code: value.code }),
-                    headers: {
-                        'content-type': 'application/json'
-                    }
-                }
-            ).then(response => response.json());
-            if ("error" in response) {
-                this.setState({ loading: false, error: response.error });
-            } else {
-                this.setState({
-                    loading: false,
-                });
-                this.props.onClose()
-                this.props.history.push(`/pick/${response.pickId}`);
-            }
-        } catch (e) {
-            this.setState({ loading: false, error: e.message });
-        }
+    onSubmit = ({ value }) => {
+        this.props.joinPick(value.code, value.name, this.props.history);
     }
 
     render() {
-        const { user, onClose } = this.props;
-        const { loading, error } = this.state;
+        const { onClose, auth, anonymousDisplayName, error } = this.props;
         return (
             <Layer position="center" onClickOutside={onClose} onEsc={onClose} responsive>
                 <Header pad="small">
@@ -83,9 +32,9 @@ class EnterCodeLayer extends Component {
                 <Box pad="medium" gap="small" width="medium" fill>
 
                     <Form onSubmit={this.onSubmit}>
-                        {user ?
+                        {auth.uid ?
                             (<Button plain icon={<User />}
-                                label={user.displayName + (user.anonymous ? " (invité)" : "")}
+                                label={(auth.displayName || anonymousDisplayName) + (auth.isAnonymous ? " (invité)" : "")}
                                 margin={{ horizontal: "small", vertical: "none" }}
                             />
                             ) : (
@@ -135,13 +84,26 @@ class EnterCodeLayer extends Component {
                         </Box>
                     </Form>
                 </Box>
-                {
-                    loading && <LoadingLayer />
-                }
             </Layer>
         )
     }
 }
 
-const FbEnterCodeLayer = withAPIService(withRouter(withFirebaseService(EnterCodeLayer)));
-export default FbEnterCodeLayer;
+const mapStateToProps = (state) => {
+    return {
+        auth: state.firebase.auth,
+        anonymousDisplayName: state.auth.anonymousDisplayName,
+        error: state.pick.joinError
+    }
+}
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        joinPick: (code, name, history) => dispatch(joinPick(code, name, history))
+    }
+}
+
+export default compose(
+    connect(mapStateToProps, mapDispatchToProps),
+    withRouter
+)(EnterCodeLayer);

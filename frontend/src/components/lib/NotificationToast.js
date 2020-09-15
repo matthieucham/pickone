@@ -12,7 +12,7 @@ const theme = {
     },
 };
 
-const NotificationToast = ({ appearance, children, onDismiss }) => (
+const NotificationToast = ({ appearance, message, closeToast }) => (
     <Grommet theme={theme}>
         <Box
             align="center"
@@ -37,14 +37,14 @@ const NotificationToast = ({ appearance, children, onDismiss }) => (
             {appearance === "error" && <StatusCritical size="large" color="white" />}
             {appearance === "info" && <StatusInfo size="large" color="white" />}
             <Box align="center">
-                <Text weight="bold" color={appearance !== "warning" ? "white" : "dark-1"}>{children}</Text>
+                <Text weight="bold" color={appearance !== "warning" ? "white" : "dark-1"}>{message}</Text>
             </Box>
             <Box align="center">
                 <Button
                     icon={<FormClose color={appearance !== "warning" ? "white" : "dark-1"} />}
                     plain
                     focusIndicator={false}
-                    onClick={onDismiss} />
+                    onClick={closeToast} />
             </Box>
         </Box>
     </Grommet>

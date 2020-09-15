@@ -7,10 +7,10 @@ import { StatusDisabled, StatusInfo, StatusUnknown, User } from 'grommet-icons';
 import { useHistory } from "react-router-dom"
 
 
-const RegistrationCard = ({ registration }) => {
+const RegistrationCard = ({ registration, userId }) => {
     let history = useHistory();
     const { pickId, pickTitle, status, pickDate, pickAuthor } = registration;
-    const user = { name: "TODO", id: "TODO" };
+    // const user = { name: "TODO", id: "TODO" };
     return (
         <Card key={pickId} height="small" width="medium" background="light-1" margin="xsmall"
             onClick={() => { history.push(`/pick/${pickId}`) }}>
@@ -35,7 +35,7 @@ const RegistrationCard = ({ registration }) => {
                 <Button
                     icon={<User />}
                     label={
-                        <Text size="small" weight={pickAuthor.id === user.id ? "bold" : "normal"}>
+                        <Text size="small" weight={pickAuthor.id === userId ? "bold" : "normal"}>
                             {pickAuthor.name}</Text>
                     }
                     plain />

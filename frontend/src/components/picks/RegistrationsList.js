@@ -6,13 +6,13 @@ import {
 } from 'grommet';
 
 
-const RegistrationsList = ({ registrations }) => {
+const RegistrationsList = ({ registrations, userId }) => {
     return (
         <Box direction="row" gap="small" align="center" justify="start" wrap>
             {
                 registrations && registrations.map(
                     (reg) => (
-                        <RegistrationCard registration={reg} key={reg.pickId} />
+                        <RegistrationCard registration={reg} key={reg.pickId} userId={userId} />
                     )
                 )
             }
