@@ -4,21 +4,23 @@ import { Chat } from "grommet-icons";
 import qs from "qs";
 import { useLocation } from "react-router-dom";
 
-import JoinPick from "../login/JoinPick";
+import JoinPick from "./JoinPick";
 import backgroundImg from "../../assets/lavalamps.jpg";
+import { showJoinPickModal } from "../../store/actions/uiActions";
+import { connect } from "react-redux";
 
-const Home = ({ user, onAnonymousLogin }) => {
+const Home = ({ showJoinPick, showJoinPickModal }) => {
     let location = useLocation();
-    const [openCodeDialog, setOpenCodeDialog] = useState(false);
     const [showCookieBanner, setShowCookieBanner] = useState(true);
     const [presetCode, setPresetCode] = useState(undefined);
     useEffect(() => {
         const codeParam = qs.parse(location.search, { ignoreQueryPrefix: true }).__sharing_code;
         if (codeParam) {
-            setOpenCodeDialog(true);
+            console.log("codeParam=", codeParam);
+            showJoinPickModal(true);
             setPresetCode(codeParam);
         }
-    }, [location]);
+    }, [location, showJoinPickModal]);
 
     return (
         <Box fill="horizontal">
@@ -77,7 +79,7 @@ const Home = ({ user, onAnonymousLogin }) => {
                 </Box>
 
                 <Box>
-                    <Button size="large" label="Rejoindre un vote" icon={<Chat />} primary onClick={() => setOpenCodeDialog(true)} />
+                    <Button size="large" label="Rejoindre un vote" icon={<Chat />} primary onClick={() => showJoinPickModal(true)} />
                 </Box>
 
                 <Box pad="large" background="dark-2" fill="horizontal" align="center">
@@ -99,15 +101,26 @@ const Home = ({ user, onAnonymousLogin }) => {
                     </Box>
                 </Box>
                 {
-                    openCodeDialog &&
-                    <JoinPick user={user}
+                    showJoinPick &&
+                    <JoinPick
                         presetCode={presetCode}
-                        onClose={() => setOpenCodeDialog(false)}
-                        onAnonymousLogin={onAnonymousLogin} />
+                        onClose={() => showJoinPickModal(false)} />
                 }
             </Box>
         </Box>
     )
 }
 
-export default Home;
+const mapStateToProps = (state) => {
+    return {
+        showJoinPick: state.ui.showJoinPick
+    }
+}
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        showJoinPickModal: (show) => dispatch(showJoinPickModal(show))
+    }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Home);

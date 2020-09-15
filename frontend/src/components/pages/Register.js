@@ -1,129 +1,92 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
 import {
     Box, Button, Form, FormField, Heading, Text, TextInput
 } from 'grommet';
-import firebase from 'firebase/app';
+import { connect } from "react-redux";
 
+import { createAccount, registerAnonymous } from "../../store/actions/authActions";
 
-import { withFirebaseService } from '../../hoc';
-import LoadingLayer from "../lib/LoadingLayer";
-import SocialNetworks from '../login/SocialNetworks';
+const Register = ({ auth, displayName, error, fetching, createAccount, registerAnonymous }) => {
+    const [username, setUsername] = useState(displayName);
+    const [displayedError, setDisplayedError] = useState(error);
 
-
-class Register extends Component {
-
-    state = {
-        isError: false,
-        errorMessage: '',
-        loading: false,
-        username: this.props.user ? this.props.user.displayName : "",
-    }
-
-    validate = (value) => {
+    const onSubmit = ({ value }) => {
         if (value.password !== value.confirm) {
-            this.setState({
-                errorMessage: 'Le mot de passe et sa confirmation doivent être identiques',
-                isError: true,
-                loading: false
-            })
-            return false;
+            setDisplayedError("Le mot de passe et sa confirmation doivent être identiques");
+            return
         }
-        return true;
+        const cred = {
+            email: value.email,
+            password: value.password,
+            displayName: username
+        }
+        if (auth.uid) {
+            // Link anonymous account
+            registerAnonymous(cred);
+        } else {
+            createAccount(cred);
+        }
     }
 
-    handleSubmit = async ({ value }) => {
+    return (<Box align="center" pad="small">
+        <Heading level="3">Inscription</Heading>
+        <Box align="center" justify="center">
+            <Box width="medium">
+                <Form
+                    onSubmit={onSubmit}
+                >
+                    <FormField label="Pseudo" name="display" required>
+                        <TextInput name="display" type="text"
+                            value={username}
+                            onChange={event => setUsername(event.target.value)} />
+                    </FormField>
 
-        await this.setState({
-            isError: false,
-            errorMessage: '',
-            loading: true
-        });
-        if (this.validate(value)) {
-            try {
-                if (!this.props.user) {
-                    const createUserResponse = await this.props.FirebaseService.getAuth().createUserWithEmailAndPassword(value.email, value.password);
-                    await createUserResponse.user.updateProfile({ displayName: value.display });
-                    if (this.props.onDisplayNameChanged) {
-                        this.props.onDisplayNameChanged(value.display, true);
-                    }
-                }
-                else if (this.props.user.anonymous) {
-                    const credential = firebase.auth.EmailAuthProvider.credential(value.email, value.password);
-                    const usercred = await this.props.FirebaseService.getAuth().currentUser.linkWithCredential(credential);
-                    await usercred.user.updateProfile({ displayName: value.display });
-                    if (this.props.onDisplayNameChanged) {
-                        this.props.onDisplayNameChanged(value.display, true);
-                    }
-                }
-            } catch (err) {
-                this.setState({
-                    errorMessage: err.message,
-                    isError: true,
-                    loading: false
-                });
-                return
-            }
-        }
-        this.setState({
-            loading: false,
-            errorMessage: '',
-            isError: false
-        });
+                    <FormField label="Adresse e-mail" name="email" required>
+                        <TextInput name="email" type="email" />
+                    </FormField>
 
-    }
+                    <FormField label="Mot de passe" name="password" required>
+                        <TextInput name="password" type="password" />
+                    </FormField>
 
-    render() {
-        const { isError, errorMessage, loading, username } = this.state;
-        return (
-            <Box align="center" pad="small">
-                <Heading level="3">Inscription</Heading>
-                <Box align="center" justify="center">
-                    <Box width="medium">
-                        <Form
-                            onSubmit={this.handleSubmit}
-                        >
-                            <FormField label="Pseudo" name="display" required>
-                                <TextInput name="display" type="text"
-                                    value={username}
-                                    onChange={event => this.setState({ username: event.target.value })} />
-                            </FormField>
+                    <FormField label="Confirmation du mot de passe" name="confirm" required>
+                        <TextInput name="confirm" type="password" />
+                    </FormField>
 
-                            <FormField label="Adresse e-mail" name="email" required>
-                                <TextInput name="email" type="email" />
-                            </FormField>
+                    {displayedError && (
+                        <Box pad={{ horizontal: 'small' }}>
+                            <Text color="status-error">{displayedError}</Text>
+                        </Box>
+                    )}
 
-                            <FormField label="Mot de passe" name="password" required>
-                                <TextInput name="password" type="password" />
-                            </FormField>
-
-                            <FormField label="Confirmation du mot de passe" name="confirm" required>
-                                <TextInput name="confirm" type="password" />
-                            </FormField>
-
-                            {isError && (
-                                <Box pad={{ horizontal: 'small' }}>
-                                    <Text color="status-error">{errorMessage}</Text>
-                                </Box>
-                            )}
-
-                            <Box direction="row" justify="center" margin={{ top: 'medium' }}>
-                                <Button type="submit" label="S'inscrire" disabled={loading} primary />
-                            </Box>
-                        </Form>
+                    <Box direction="row" justify="center" margin={{ top: 'medium' }}>
+                        <Button type="submit" label="S'inscrire" disabled={fetching} primary />
                     </Box>
-                    <Box width="medium" margin="medium">
-                        <Text>Ou bien connectez-vous à l'aide d'un compte externe</Text>
-                        <SocialNetworks />
-                    </Box>
-                </Box>
-                {
-                    loading && <LoadingLayer />
-                }
+                </Form>
             </Box>
-        )
+            {/* <Box width="medium" margin="medium">
+                <Text>Ou bien connectez-vous à l'aide d'un compte externe</Text>
+                <SocialNetworks />
+            </Box> */}
+        </Box>
+
+    </Box>)
+}
+
+const mapStateToProps = (state) => {
+    return {
+        auth: state.firebase.auth,
+        displayName: state.auth.anonymousDisplayName,
+        error: state.auth.authError,
+        fetching: state.ui.fetching
     }
 }
 
-const WrappedComponent = withFirebaseService(Register);
+const mapDispatchToProps = (dispatch) => {
+    return {
+        createAccount: (credentials) => dispatch(createAccount(credentials)),
+        registerAnonymous: (credentials) => dispatch(registerAnonymous(credentials))
+    }
+}
 
-export default WrappedComponent;
+export default connect(mapStateToProps, mapDispatchToProps)(Register);

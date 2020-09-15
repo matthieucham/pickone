@@ -1,3 +1,6 @@
+class FetchError extends Error {
+}
+
 class APIService {
     constructor(APIEndpoint) {
         this.APIEndpoint = APIEndpoint;
@@ -9,6 +12,7 @@ class APIService {
             ...options,
             withCredentials: true,
             headers: {
+                'content-type': 'application/json',
                 ...options.headers,
                 Authorization: `${bearer}`,
             },
@@ -22,7 +26,26 @@ class APIService {
             'Content-Type': 'application/json',
             ...options,
         };
-        return fetch(`${this.APIEndpoint}/${path}`, callOptions);
+        return fetch(`${this.APIEndpoint}/${path}`, callOptions)
+            .then((response) => {
+                if (response.ok) {
+                    return response.json().then((content) => {
+                        console.log(content);
+                        return content;
+                    })
+                } else {
+                    return response.json().then((content) => {
+                        console.log(content);
+                        throw new FetchError(content.error);
+                    }).catch((err) => {
+                        console.log(err);
+                        throw new FetchError(err.message);
+                    })
+                }
+            }).catch((err) => {
+                console.log(err);
+                throw new FetchError(err.message);
+            });
     }
 }
 
