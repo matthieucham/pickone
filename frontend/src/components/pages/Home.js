@@ -16,7 +16,6 @@ const Home = ({ showJoinPick, showJoinPickModal }) => {
     useEffect(() => {
         const codeParam = qs.parse(location.search, { ignoreQueryPrefix: true }).__sharing_code;
         if (codeParam) {
-            console.log("codeParam=", codeParam);
             showJoinPickModal(true);
             setPresetCode(codeParam);
         }

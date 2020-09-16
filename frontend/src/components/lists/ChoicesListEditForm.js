@@ -61,7 +61,6 @@ class ChoicesListEditForm extends React.Component {
     render() {
         const { listId, list, listError, fetching, createList, editList, history, ...props } = this.props;
         const showForm = Boolean(!listId || list);
-        console.log(showForm);
         return (
             <Box {...props}>
                 {showForm &&

@@ -223,7 +223,7 @@ class App extends Component {
 }
 
 const mapStateToProps = (state) => {
-  console.log(state)
+  //console.log(state)
   return {
     fetching: state.ui.fetching,
     pushMessaging: state.ui.pushMessaging

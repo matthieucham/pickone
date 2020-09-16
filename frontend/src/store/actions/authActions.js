@@ -53,7 +53,6 @@ export const linkAnonymousToGoogle = () => {
                 firebase.auth().currentUser.reload();
                 const auth = firebase.auth().currentUser;
                 dispatch({ type: '@@reactReduxFirebase/LOGIN', auth });
-                console.log("AFTER")
             }).then(() => {
                 dispatch({ type: "REGISTER_ANONYMOUS_SUCCESS" })
             }).catch((err) => {

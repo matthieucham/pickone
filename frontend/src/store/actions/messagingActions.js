@@ -3,7 +3,6 @@ import { toast } from "react-toastify";
 import NotificationToast from "../../components/lib/NotificationToast";
 
 export const sendToken = (token) => {
-    console.log(token);
     return (dispatch, getState, { getFirebase, getFirestore, getAPIService }) => {
         const api = getAPIService();
         const firebase = getFirebase();
@@ -21,13 +20,13 @@ export const sendToken = (token) => {
             )
         }).then((response) => {
             dispatch({ type: "PUSH_MESSAGING" });
-            toast(<NotificationToast appearance="success" message={`Les notifications push sont activées`} />,
+            toast(<NotificationToast appearance="success" message={`Les notifications sont activées`} />,
                 { toastId: "PUSH_MESSAGING" })
         }).catch((err) => {
             dispatch({ type: "PUSH_MESSAGING_ERROR", err });
-            console.log(err);
-            toast(<NotificationToast appearance="error" message={`Une erreur est survenue`} />,
-                { toastId: "PUSH_MESSAGING_ERROR" })
+            console.error(err);
+            // toast(<NotificationToast appearance="error" message={`Une erreur est survenue`} />,
+            //     { toastId: "PUSH_MESSAGING_ERROR" })
         })
     }
 }

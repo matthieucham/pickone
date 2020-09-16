@@ -5,8 +5,8 @@ import "firebase/messaging";
 import "firebase/analytics";
 
 var config = {
-    // backendAPI: "https://us-central1-pickone-2e023.cloudfunctions.net",
-    backendAPI: "http://localhost:5001/pickone-2e023/us-central1",
+    backendAPI: "https://us-central1-pickone-2e023.cloudfunctions.net",
+    //backendAPI: "http://localhost:5001/pickone-2e023/us-central1",
     apiKey: "AIzaSyDhxWX4E-sqyiFMR7qCiPcLlTLGBUmKrGM",
     authDomain: "pickone-2e023.firebaseapp.com",
     databaseURL: "https://pickone-2e023.firebaseio.com",

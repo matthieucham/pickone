@@ -3,7 +3,6 @@ import { Box, Button, Menu, Text } from "grommet";
 import { CloudUpload, NewWindow } from "grommet-icons"
 
 export const PickChoicesListMenu = ({ lists, onListSelected }) => {
-    console.log(lists);
     return (
         <Menu
             dropProps={

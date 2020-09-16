@@ -30,20 +30,16 @@ class APIService {
             .then((response) => {
                 if (response.ok) {
                     return response.json().then((content) => {
-                        console.log(content);
                         return content;
                     })
                 } else {
                     return response.json().then((content) => {
-                        console.log(content);
                         throw new FetchError(content.error);
                     }).catch((err) => {
-                        console.log(err);
                         throw new FetchError(err.message);
                     })
                 }
             }).catch((err) => {
-                console.log(err);
                 throw new FetchError(err.message);
             });
     }

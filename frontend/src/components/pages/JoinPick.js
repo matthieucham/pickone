@@ -1,12 +1,12 @@
 import React, { Component } from 'react';
-import { Box, Button, Form, FormField, Header, Heading, Layer, Text, TextInput } from 'grommet';
+import { Anchor, Box, Button, Form, FormField, Header, Heading, Layer, Text, TextInput } from 'grommet';
 import { CircleInformation, FormClose, User } from "grommet-icons";
 import { withRouter } from "react-router-dom";
 
-import { RouterAnchor } from "../ext/RoutedControls";
 import { compose } from "redux";
 import { connect } from "react-redux";
 import { joinPick } from "../../store/actions/pickActions";
+import { showJoinPickModal } from "../../store/actions/uiActions";
 
 class EnterCodeLayer extends Component {
 
@@ -19,7 +19,7 @@ class EnterCodeLayer extends Component {
     }
 
     render() {
-        const { onClose, auth, anonymousDisplayName, error } = this.props;
+        const { onClose, auth, anonymousDisplayName, error, showJoinPickModal } = this.props;
         return (
             <Layer position="center" onClickOutside={onClose} onEsc={onClose} responsive>
                 <Header pad="small">
@@ -64,7 +64,11 @@ class EnterCodeLayer extends Component {
                             <Box pad="xsmall" flex>
                                 <Text size="small">Pas de code ? Pas de problème</Text>
                                 <Text size="small">identifiez-vous et organisez votre propre vote</Text>
-                                <RouterAnchor path="/login" size="small">S'identifier</RouterAnchor>
+                                <Anchor size="small" onClick={() => {
+                                    this.props.history.push("/login");
+                                    showJoinPickModal(false);
+                                }
+                                }>S'identifier</Anchor>
                             </Box>
                         </Box>
 
@@ -84,7 +88,7 @@ class EnterCodeLayer extends Component {
                         </Box>
                     </Form>
                 </Box>
-            </Layer>
+            </Layer >
         )
     }
 }
@@ -99,7 +103,8 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
     return {
-        joinPick: (code, name, history) => dispatch(joinPick(code, name, history))
+        joinPick: (code, name, history) => dispatch(joinPick(code, name, history)),
+        showJoinPickModal: (show) => dispatch(showJoinPickModal(show))
     }
 }
 

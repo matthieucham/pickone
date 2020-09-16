@@ -10,7 +10,6 @@ class ItemsField extends Component {
 
     constructor(props) {
         super(props);
-        console.log(props.value)
         this.state = {
             items: props.value ? props.value : [],
             newvalue: ""

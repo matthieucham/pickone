@@ -20,7 +20,7 @@ export const deleteList = (list) => {
             toast(<NotificationToast appearance="success" message={`La liste ${list.name} a été supprimée`} />)
         }).catch((err) => {
             dispatch({ type: "DELETE_LIST_ERROR", list, err });
-            console.log(err);
+            console.error(err);
             toast(<NotificationToast appearance="error" message={`Erreur lors de la suppression de la liste ${list.name}`} />)
         }).finally(() => {
             dispatch({ type: "FETCH_DONE" });
@@ -51,7 +51,7 @@ export const createList = (data, history) => {
             }
             toast(<NotificationToast appearance="success" message={`La liste ${data.name} a été créée`} />)
         }).catch((err) => {
-            console.log(err);
+            console.error(err);
             dispatch({ type: "CREATE_LIST_ERROR", data, err });
             toast(<NotificationToast appearance="error" message={`Erreur lors de la création de la liste ${data.name}`} />)
         }).finally(() => {
@@ -84,7 +84,7 @@ export const editList = (data, listId, history) => {
             toast(<NotificationToast appearance="success" message={`La liste ${data.name} a été modifiée`} />)
         }).catch((err) => {
             dispatch({ type: "EDIT_LIST_ERROR", data, err });
-            console.log(err);
+            console.error(err);
             toast(<NotificationToast appearance="error" message={`Erreur lors de la modification de la liste ${data.name}`} />)
         }).finally(() => {
             dispatch({ type: "FETCH_DONE" });

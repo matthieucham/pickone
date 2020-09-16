@@ -33,7 +33,7 @@ const rrfConfig = {
     // Clear redux-firestore state if auth does not exist (i.e logout)
     if (!authData) {
       dispatch({ type: actionTypes.CLEAR_DATA })
-      dispatch("DISABLE_PUSH_MESSAGING");
+      dispatch({ type: "DISABLE_PUSH_MESSAGING" });
     } else {
       // "new" user : setup push messaging
       getMessagingToken().then(
